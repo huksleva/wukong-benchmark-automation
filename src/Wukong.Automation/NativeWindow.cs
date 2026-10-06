@@ -21,8 +21,31 @@ public sealed class NativeWindow(nint handle)
 
     public void Focus()
     {
-        if (IsIconic(Handle)) ShowWindow(Handle, 9);
-        if (GetForegroundWindow() != Handle) SetForegroundWindow(Handle);
+        if (!IsWindow(Handle)) throw new InvalidOperationException("Benchmark window disappeared.");
+        if (GetForegroundWindow() == Handle) return;
+        var currentThread = GetCurrentThreadId();
+        var foregroundThread = GetWindowThreadProcessId(GetForegroundWindow(), out _);
+        var targetThread = GetWindowThreadProcessId(Handle, out _);
+        var foregroundAttached = false;
+        var targetAttached = false;
+        try
+        {
+            // Windows restricts foreground changes across input queues. Temporarily
+            // join the existing queues; never inject an unrelated global shortcut.
+            if (foregroundThread != 0 && foregroundThread != currentThread)
+                foregroundAttached = AttachThreadInput(currentThread, foregroundThread, true);
+            if (targetThread != 0 && targetThread != currentThread && targetThread != foregroundThread)
+                targetAttached = AttachThreadInput(currentThread, targetThread, true);
+            if (IsIconic(Handle)) ShowWindow(Handle, 9);
+            BringWindowToTop(Handle);
+            SetForegroundWindow(Handle);
+        }
+        finally
+        {
+            if (targetAttached) AttachThreadInput(currentThread, targetThread, false);
+            if (foregroundAttached) AttachThreadInput(currentThread, foregroundThread, false);
+        }
+        for (var i = 0; i < 20 && GetForegroundWindow() != Handle; i++) Thread.Sleep(50);
         if (GetForegroundWindow() != Handle)
             throw new InvalidOperationException("Cannot focus the Benchmark Tool. Close Steam dialogs/overlays and keep the benchmark window in front.");
     }
@@ -89,6 +112,10 @@ public sealed class NativeWindow(nint handle)
     [DllImport("user32.dll")] private static extern bool ClientToScreen(nint hWnd, ref PointNative point);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hWnd);
+    [DllImport("user32.dll")] private static extern bool BringWindowToTop(nint hWnd);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
+    [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint attach, uint attachTo, bool value);
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
     [DllImport("user32.dll")] private static extern bool IsWindow(nint hWnd);
     [DllImport("user32.dll")] private static extern bool IsIconic(nint hWnd);
     [DllImport("user32.dll")] private static extern bool ShowWindow(nint hWnd, int command);

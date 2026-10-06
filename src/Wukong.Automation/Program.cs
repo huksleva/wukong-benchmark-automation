@@ -184,7 +184,12 @@ internal static class Program
                 foreach (var p in processes.OrderByDescending(p => p.StartTime))
                 {
                     p.Refresh();
-                    if (p.MainWindowHandle != 0) return new(p.MainWindowHandle);
+                    if (p.MainWindowHandle != 0)
+                    {
+                        var window = new NativeWindow(p.MainWindowHandle);
+                        var bounds = window.ClientBounds();
+                        if (bounds.Width >= 640 && bounds.Height >= 360) return window;
+                    }
                 }
             }
             finally { processes.ForEach(p => p.Dispose()); }
@@ -195,7 +200,7 @@ internal static class Program
 
     private static async Task CloseGameAsync(SteamInstallation installation, Action<string> log)
     {
-        var processes = installation.GameProcesses();
+        var processes = installation.GameProcesses().OrderByDescending(p => p.MainWindowHandle != 0).ToList();
         try
         {
             foreach (var p in processes)
@@ -205,6 +210,7 @@ internal static class Program
             }
             foreach (var p in processes)
             {
+                if (p.HasExited) continue;
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
                 try { await p.WaitForExitAsync(timeout.Token); }
                 catch (OperationCanceledException)
@@ -215,9 +221,19 @@ internal static class Program
                     await p.WaitForExitAsync(killTimeout.Token);
                 }
             }
-            var remaining = installation.GameProcesses();
-            try { if (remaining.Count > 0) throw new InvalidOperationException("Benchmark processes are still running; settings were not restored yet."); }
-            finally { remaining.ForEach(p => p.Dispose()); }
+            // Killing/waiting on a launcher does not wait for every descendant.
+            // Poll the actual installation's processes before restoring INIs.
+            var exitDeadline = Stopwatch.StartNew();
+            while (true)
+            {
+                var remaining = installation.GameProcesses();
+                var count = remaining.Count;
+                remaining.ForEach(p => p.Dispose());
+                if (count == 0) break;
+                if (exitDeadline.Elapsed.TotalSeconds >= 10)
+                    throw new InvalidOperationException("Benchmark processes are still running; settings were not restored yet.");
+                await Task.Delay(250);
+            }
         }
         finally { processes.ForEach(p => p.Dispose()); }
     }

@@ -61,7 +61,7 @@ public sealed record SteamInstallation(string SteamExe, string GameDirectory, st
         {
             try
             {
-                if (p.ProcessName.StartsWith("b1", StringComparison.OrdinalIgnoreCase)
+                if (!p.HasExited && p.ProcessName.StartsWith("b1", StringComparison.OrdinalIgnoreCase)
                     && p.MainModule?.FileName is { } exe
                     && exe.StartsWith(GameDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 { result.Add(p); continue; }
