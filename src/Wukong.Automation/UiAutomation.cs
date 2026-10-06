@@ -1,0 +1,256 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json;
+using Wukong.Core;
+
+namespace Wukong.Automation;
+
+public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOptions options, string directory, Action<string> log)
+{
+    private int captureIndex;
+    public async Task<OcrPage> ObserveAsync(string name, CancellationToken token)
+    {
+        var path = Path.Combine(directory, $"{++captureIndex:0000}-{name}.png");
+        window.Capture(path);
+        var page = await ocr.ReadAsync(path, token);
+        File.WriteAllText(Path.ChangeExtension(path, ".json"), JsonSerializer.Serialize(page, JsonDefaults.Options));
+        return page;
+    }
+
+    private async Task Pause(CancellationToken token) => await Task.Delay(options.PollIntervalMilliseconds, token);
+    private string[] Labels(string key) => options.Labels[key];
+    private static bool Exact(string a, string b) => OcrPage.Normalize(a) == OcrPage.Normalize(b);
+    private OcrLine? Label(OcrPage page, string key) => page.Lines.FirstOrDefault(l =>
+        !(key == "superResolutionScale" && OcrPage.Normalize(l.Text).Contains("sampling", StringComparison.Ordinal))
+        && !(key == "rayTracing" && (OcrPage.Normalize(l.Text).Contains("level", StringComparison.Ordinal)
+            || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)))
+        && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)));
+
+    public async Task WaitForMenuAsync(CancellationToken token)
+    {
+        var time = Stopwatch.StartNew();
+        var continues = 0;
+        while (time.Elapsed.TotalSeconds < options.StartupTimeoutSeconds)
+        {
+            await Pause(token);
+            var page = await ObserveAsync("startup", token);
+            if (Label(page, "settings") is not null || Label(page, "preset") is not null || Label(page, "start") is not null)
+                return;
+            if (Label(page, "continue") is not null && continues++ < 3) window.Key(NativeWindow.Enter);
+        }
+        throw new TimeoutException("Startup screen was not recognized. See startup screenshots (the UI must be English).");
+    }
+
+    public async Task<(List<SettingEvidence> Settings, List<string> Warnings)> ApplyProfileAsync(BenchmarkProfile profile, CancellationToken token)
+    {
+        var settings = new List<SettingEvidence>();
+        var warnings = new List<string>();
+        var page = await ObserveAsync("menu", token);
+        if (Label(page, "settings") is { } button && Label(page, "preset") is null)
+        {
+            window.Click(button.Bounds.CenterX, button.Bounds.CenterY);
+            await Pause(token);
+        }
+        await ClickTabAsync("displayTab", token);
+        settings.Add(await SetChoiceAsync("vsync", ["Off"], token));
+        settings.Add(await SetChoiceAsync("frameCap", ["Off", "Unlimited", "No Limit", "Unlimited FPS"], token));
+        var resolution = await ReadRowAsync("resolution", token);
+        var digits = new string(resolution.Value.Where(char.IsDigit).ToArray());
+        var requested = $"{profile.Width}{profile.Height}";
+        if (!digits.Contains(requested, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Requested {profile.Width}x{profile.Height}, but UI resolution is '{resolution.Value}'. Set the desired resolution once, or supply configDirectory pointing to the active INI directory.");
+        settings.Add(new("Display resolution", resolution.Value, "UI verified"));
+        await ClickTabAsync("graphicsTab", token);
+        settings.Add(await SetChoiceAsync("preset", [profile.Preset], token));
+        settings.Add(await SetChoiceAsync("superResolutionMode", ["TSR"], token));
+        settings.Add(await SetChoiceAsync("frameGeneration", ["Off"], token));
+        settings.Add(await SetChoiceAsync("superResolutionScale", [profile.ResolutionScale.ToString(CultureInfo.InvariantCulture)], token, steps: 110));
+        if (profile.Name == "CPU") settings.Add(await SetChoiceAsync("viewDistance", ["High"], token));
+        var rt = await FindRowAsync("rayTracing", token, optional: true);
+        if (rt is null)
+        {
+            if (profile.RayTracing) warnings.Add("Full ray tracing control is absent on this hardware/build; GPU pass uses cinematic raster graphics.");
+            settings.Add(new("Full ray tracing", "Unavailable", "UI control absent"));
+        }
+        else
+        {
+            if (profile.RayTracing)
+            {
+                // A supported option must visibly change; unsupported hardware may expose
+                // a disabled row. Never report ray tracing as active without that evidence.
+                var enabled = await TrySetChoiceAsync("rayTracing", ["On", "Very High"], token, 6);
+                if (enabled is null)
+                {
+                    settings.Add(await SetChoiceAsync("rayTracing", ["Off"], token));
+                    warnings.Add("Full ray tracing could not be enabled; GPU pass uses cinematic raster graphics.");
+                }
+                else
+                {
+                    settings.Add(enabled);
+                    if (await FindRowAsync("rayTracingQuality", token, optional: true) is not null)
+                        settings.Add(await SetChoiceAsync("rayTracingQuality", ["Very High"], token));
+                }
+            }
+            else settings.Add(await SetChoiceAsync("rayTracing", ["Off"], token));
+        }
+        await ApplyAsync(token);
+        await ObserveAsync("applied-settings", token);
+        log($"{profile.Name} profile applied and values read back from the UI.");
+        return (settings, warnings);
+    }
+
+    private async Task ClickTabAsync(string key, CancellationToken token)
+    {
+        // Tab labels are matched exactly to avoid clicking a setting containing 'graphics'.
+        var page = await ObserveAsync(key, token);
+        var tab = page.Lines.FirstOrDefault(l => Labels(key).Any(s => Exact(l.Text, s)))
+            ?? throw new InvalidOperationException($"Cannot find {key} tab.");
+        window.Click(tab.Bounds.CenterX, tab.Bounds.CenterY);
+        await Pause(token);
+        window.Scroll(20);
+        await Pause(token);
+    }
+
+    private sealed record Row(OcrPage Page, OcrLine Label, string Value);
+    private Row? RowFrom(OcrPage page, string key)
+    {
+        var label = Label(page, key);
+        if (label is null) return null;
+        var values = page.Lines.SelectMany(l => l.Words)
+            .Where(w => w.Bounds.X >= page.Width * .48 && w.Bounds.X > label.Bounds.X + label.Bounds.Width
+                && Math.Abs(w.Bounds.CenterY - label.Bounds.CenterY) < Math.Max(14, label.Bounds.Height * .8))
+            .OrderBy(w => w.Bounds.X).Select(w => w.Text).ToArray();
+        var value = string.Join(" ", values);
+        // Some OCR engines merge label and value into a single line.
+        if (value.Length == 0)
+        {
+            var labelText = Labels(key).OrderByDescending(s => s.Length).FirstOrDefault(s =>
+                OcrPage.Normalize(label.Text).StartsWith(OcrPage.Normalize(s), StringComparison.Ordinal));
+            if (labelText is not null) value = OcrPage.Normalize(label.Text)[OcrPage.Normalize(labelText).Length..].Trim();
+        }
+        return new(page, label, value);
+    }
+
+    private async Task<Row?> FindRowAsync(string key, CancellationToken token, bool optional = false)
+    {
+        window.Scroll(20);
+        await Pause(token);
+        for (var attempt = 0; attempt < 7; attempt++)
+        {
+            var page = await ObserveAsync(key, token);
+            if (RowFrom(page, key) is { } row) return row;
+            window.Scroll(-3);
+            await Pause(token);
+        }
+        if (optional) return null;
+        throw new InvalidOperationException($"Cannot find setting '{key}'. Review screenshots and configure labels for this build.");
+    }
+
+    private async Task<Row> ReadRowAsync(string key, CancellationToken token) =>
+        await FindRowAsync(key, token) ?? throw new InvalidOperationException(key);
+
+    private static bool Matches(string value, string[] choices) => choices.Any(c => Exact(value.Trim('<', '>', ' ', '%'), c));
+    private async Task<SettingEvidence?> TrySetChoiceAsync(string key, string[] choices, CancellationToken token, int steps)
+    {
+        var row = await ReadRowAsync(key, token);
+        if (Matches(row.Value, choices)) return new(Labels(key)[0], row.Value, "UI verified");
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Numeric sliders are moved left to their lower bound before incrementing.
+        if (choices.Length == 1 && int.TryParse(choices[0], out var target))
+        {
+            window.Click(row.Page.Width * options.ValueColumnX, row.Label.Bounds.CenterY);
+            for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Left); await Task.Delay(12, token); }
+            for (var i = 0; i < steps; i++)
+            {
+                var current = RowFrom(await ObserveAsync(key + "-slider", token), key);
+                if (current is null) break;
+                if (Matches(current.Value, choices)) return new(Labels(key)[0], current.Value, "UI verified");
+                if (int.TryParse(current.Value.Trim().TrimEnd('%'), out var numeric) && numeric > target) break;
+                window.Key(NativeWindow.Right);
+                await Task.Delay(60, token);
+            }
+            return null;
+        }
+        for (var direction = 0; direction < 2; direction++)
+        {
+            seen.Clear();
+            for (var i = 0; i < steps; i++)
+            {
+                if (Matches(row.Value, choices)) return new(Labels(key)[0], row.Value, "UI verified");
+                if (!seen.Add(row.Value)) break;
+                window.Click(row.Page.Width * options.ValueColumnX, row.Label.Bounds.CenterY);
+                window.Key(direction == 0 ? NativeWindow.Right : NativeWindow.Left);
+                await Pause(token);
+                var page = await ObserveAsync(key + "-change", token);
+                // RT toggles may display a known restart/confirmation dialog.
+                if (Label(page, "confirm") is { } confirm)
+                {
+                    window.Click(confirm.Bounds.CenterX, confirm.Bounds.CenterY);
+                    await Pause(token);
+                    page = await ObserveAsync(key + "-confirmed", token);
+                }
+                row = RowFrom(page, key) ?? throw new InvalidOperationException($"Setting {key} disappeared after input.");
+            }
+        }
+        if (Matches(row.Value, choices)) return new(Labels(key)[0], row.Value, "UI verified");
+        return null;
+    }
+
+    private async Task<SettingEvidence> SetChoiceAsync(string key, string[] choices, CancellationToken token, int steps = 12) =>
+        await TrySetChoiceAsync(key, choices, token, steps)
+        ?? throw new InvalidOperationException($"Cannot set '{key}' to {string.Join(" / ", choices)}. See OCR evidence.");
+
+    private async Task ApplyAsync(CancellationToken token)
+    {
+        var page = await ObserveAsync("before-apply", token);
+        if (Label(page, "apply") is { } apply)
+        {
+            window.Click(apply.Bounds.CenterX, apply.Bounds.CenterY);
+            await Pause(token);
+            var confirmation = await ObserveAsync("after-apply", token);
+            if (Label(confirmation, "confirm") is { } confirm)
+            { window.Click(confirm.Bounds.CenterX, confirm.Bounds.CenterY); await Pause(token); }
+        }
+    }
+
+    public async Task<(BenchmarkMetrics Metrics, string Screenshot, string Ocr)> RunBenchmarkAsync(CancellationToken token)
+    {
+        var page = await ObserveAsync("before-start", token);
+        if (Label(page, "start") is { } start)
+            window.Click(start.Bounds.CenterX, start.Bounds.CenterY);
+        else
+        {
+            window.Key(NativeWindow.Escape);
+            await Pause(token);
+            page = await ObserveAsync("main-menu", token);
+            var button = Label(page, "start") ?? throw new InvalidOperationException("Cannot find Run/Start Benchmark.");
+            window.Click(button.Bounds.CenterX, button.Bounds.CenterY);
+        }
+        await Pause(token);
+        page = await ObserveAsync("start-confirmation", token);
+        if (Label(page, "confirm") is { } confirmation)
+            window.Click(confirmation.Bounds.CenterX, confirmation.Bounds.CenterY);
+        var time = Stopwatch.StartNew();
+        var leftMenu = false;
+        BenchmarkMetrics? previous = null;
+        while (time.Elapsed.TotalSeconds < options.BenchmarkTimeoutSeconds)
+        {
+            await Pause(token);
+            page = await ObserveAsync("benchmark", token);
+            if (!leftMenu) leftMenu = Label(page, "start") is null && Label(page, "preset") is null;
+            if (!leftMenu) continue;
+            if (!ResultParser.TryParse(page, out var metrics)) { previous = null; continue; }
+            if (metrics != previous) { previous = metrics; continue; }
+            var screenshot = Path.Combine(directory, "result.png");
+            window.Capture(screenshot);
+            var final = await ocr.ReadAsync(screenshot, token);
+            if (!ResultParser.TryParse(final, out var verified) || verified != metrics)
+            { previous = null; continue; }
+            var raw = Path.Combine(directory, "result-ocr.json");
+            File.WriteAllText(raw, JsonSerializer.Serialize(final, JsonDefaults.Options));
+            log($"Completed: average {metrics!.AverageFps}, min {metrics.MinimumFps}, max {metrics.MaximumFps} FPS.");
+            return (metrics, screenshot, raw);
+        }
+        throw new TimeoutException("Benchmark result did not appear before the deadline. See screenshots; no FPS values were fabricated.");
+    }
+}

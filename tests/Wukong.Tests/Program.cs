@@ -1,0 +1,98 @@
+using System.Text.Json;
+using Wukong.Automation;
+using Wukong.Core;
+
+var failures = 0;
+var count = 0;
+void Test(string name, Action action)
+{
+    count++;
+    try { action(); Console.WriteLine("PASS " + name); }
+    catch (Exception e) { failures++; Console.Error.WriteLine("FAIL " + name + ": " + e.Message); }
+}
+static void Equal<T>(T expected, T actual)
+{
+    if (!Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}.");
+}
+static void Throws<T>(Action action) where T : Exception
+{
+    try { action(); } catch (T) { return; }
+    throw new Exception("Expected " + typeof(T).Name);
+}
+static OcrLine Line(string text, double x, double y, double width = 180) =>
+    new(text, [new(text, new(x, y, width, 30))]);
+static OcrPage Inline(string avg = "72.5", string min = "44", string max = "98") => new(1920, 1080,
+    [Line("Average FPS " + avg, 200, 400), Line("Minimum FPS " + min, 600, 400), Line("Maximum FPS " + max, 1000, 400)]);
+
+Test("inline summary decimal FPS", () => Equal(new BenchmarkMetrics(72.5, 44, 98), ResultParser.Parse(Inline())));
+Test("decimal comma OCR", () => Equal(72.5, ResultParser.Parse(Inline("72,5")).AverageFps));
+Test("numbers above their labels", () =>
+{
+    var page = new OcrPage(1920, 1080, [Line("72", 260, 350, 60), Line("Average FPS", 200, 400),
+        Line("44", 660, 350, 60), Line("Minimum FPS", 600, 400),
+        Line("98", 1060, 350, 60), Line("Maximum FPS", 1000, 400)]);
+    Equal(new BenchmarkMetrics(72, 44, 98), ResultParser.Parse(page));
+});
+Test("ignore graph axis and hardware numbers", () =>
+{
+    var page = Inline() with { Lines = [.. Inline().Lines, Line("120", 100, 900, 50), Line("NVIDIA RTX 4090", 20, 100), Line("32 GB RAM", 20, 130)] };
+    Equal(98d, ResultParser.Parse(page).MaximumFps);
+});
+Test("reject missing minimum", () => Throws<InvalidDataException>(() => ResultParser.Parse(new(1920, 1080, [Inline().Lines[0], Inline().Lines[2]]))));
+Test("reject inconsistent min/average/max", () => Throws<InvalidDataException>(() => ResultParser.Parse(Inline("30", "50", "90"))));
+Test("reject zero FPS summary", () => Throws<InvalidDataException>(() => ResultParser.Parse(Inline("0", "0", "0"))));
+Test("reject ambiguous nearby metric", () =>
+{
+    var page = new OcrPage(1920, 1080, [Line("Average FPS", 200, 400), Line("70", 260, 350, 60), Line("80", 260, 450, 60),
+        Line("Minimum FPS 40", 600, 400), Line("Maximum FPS 100", 1000, 400)]);
+    Throws<InvalidDataException>(() => ResultParser.Parse(page));
+});
+Test("INI preserves unrelated sections and removes duplicate edited key", () =>
+{
+    var ini = new IniDocument("; keep me\r\n[Other]\r\nFrameRateLimit=60\r\n[Game]\r\nFrameRateLimit=144\r\nFrameRateLimit=30\r\nUnrelated=yes\r\n");
+    ini.Set("Game", "FrameRateLimit", "0");
+    Equal("60", ini.Get("Other", "FrameRateLimit"));
+    Equal("0", ini.Get("Game", "FrameRateLimit"));
+    Equal("yes", ini.Get("Game", "Unrelated"));
+    if (!ini.ToString().Contains("; keep me\r\n")) throw new Exception("Comment/newline lost.");
+});
+Test("INI creates missing scalability section", () =>
+{
+    var ini = new IniDocument("[Game]\nResolutionSizeX=1920\n");
+    ini.Set("ScalabilityGroups", "sg.ShadowQuality", "0");
+    Equal("0", new IniDocument(ini.ToString()).Get("ScalabilityGroups", "sg.ShadowQuality"));
+    Equal("Game", ini.FindSectionContaining("ResolutionSizeX"));
+});
+Test("original INI restored byte-for-byte including new files", () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), "wukong-test-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        var config = Path.Combine(root, "Config"); Directory.CreateDirectory(config);
+        var original = System.Text.Encoding.Unicode.GetBytes("[Game]\r\nResolutionSizeX=1920\r\n");
+        File.WriteAllBytes(Path.Combine(config, "GameUserSettings.ini"), original);
+        var backup = new SettingsBackup(config, Path.Combine(root, "Results"));
+        File.WriteAllText(Path.Combine(config, "GameUserSettings.ini"), "changed");
+        File.WriteAllText(Path.Combine(config, "Engine.ini"), "created during run");
+        backup.Restore();
+        if (!File.ReadAllBytes(Path.Combine(config, "GameUserSettings.ini")).SequenceEqual(original)) throw new Exception("Bytes not restored.");
+        Equal(false, File.Exists(Path.Combine(config, "Engine.ini")));
+    }
+    finally { Directory.Delete(root, true); }
+});
+Test("invalid runner config rejected", () => Throws<ArgumentException>(() => new RunnerOptions { PollIntervalMilliseconds = 1 }.Validate()));
+Test("report escapes application strings", () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), "wukong-report-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        ReportWriter.Write(root, new("failed", DateTimeOffset.UtcNow,
+            new("Windows", ["<script>cpu</script>"], ["GPU"], 32, ["1"], 8, "X64", []), [], "<error>"));
+        var html = File.ReadAllText(Path.Combine(root, "report.html"));
+        if (html.Contains("<script>")) throw new Exception("Unsafe HTML.");
+        Equal("failed", JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "report.json"))).RootElement.GetProperty("status").GetString());
+    }
+    finally { Directory.Delete(root, true); }
+});
+Console.WriteLine($"{count - failures}/{count} tests passed.");
+return failures == 0 ? 0 : 1;

@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.idea/
+work/
+artifacts/
+results/
+runner.local.json
+*.user
+*.suo
