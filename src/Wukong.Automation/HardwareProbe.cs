@@ -10,11 +10,12 @@ public static class HardwareProbe
 {
     public static async Task<MachineInfo> ReadAsync(CancellationToken token)
     {
-        const string script = "[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; " +
+        const string script = "[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; try { " +
             "$c=@(Get-CimInstance Win32_Processor | ForEach-Object Name); " +
             "$g=@(Get-CimInstance Win32_VideoController); " +
             "$r=(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory; " +
-            "@{cpu=$c;gpu=@($g|ForEach-Object Name);driverVersions=@($g|ForEach-Object DriverVersion);ramGiB=$r/1GB} | ConvertTo-Json -Compress";
+            "@{cpu=$c;gpu=@($g|ForEach-Object Name);driverVersions=@($g|ForEach-Object DriverVersion);ramGiB=$r/1GB} | ConvertTo-Json -Compress " +
+            "} catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }";
         var info = new ProcessStartInfo("powershell.exe")
         { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8 };
@@ -35,9 +36,9 @@ public static class HardwareProbe
             if (process.ExitCode != 0) throw new InvalidOperationException((await stderr).Trim());
             using var json = JsonDocument.Parse(await stdout);
             var root = json.RootElement;
-            cpu = root.GetProperty("cpu").EnumerateArray().Select(v => v.GetString() ?? "Unknown").ToArray();
-            gpu = root.GetProperty("gpu").EnumerateArray().Select(v => v.GetString() ?? "Unknown").ToArray();
-            drivers = root.GetProperty("driverVersions").EnumerateArray().Select(v => v.GetString() ?? "Unknown").ToArray();
+            cpu = root.GetProperty("cpu").EnumerateArray().Select(v => v.GetString()?.Trim() ?? "Unknown").ToArray();
+            gpu = root.GetProperty("gpu").EnumerateArray().Select(v => v.GetString()?.Trim() ?? "Unknown").ToArray();
+            drivers = root.GetProperty("driverVersions").EnumerateArray().Select(v => v.GetString()?.Trim() ?? "Unknown").ToArray();
             ram = Math.Round(root.GetProperty("ramGiB").GetDouble(), 2);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

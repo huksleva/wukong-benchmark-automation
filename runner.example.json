@@ -6,6 +6,7 @@
   "startupTimeoutSeconds": 180,
   "benchmarkTimeoutSeconds": 600,
   "pollIntervalMilliseconds": 2000,
+  "maxDiagnosticFrames": 40,
   "valueColumnX": 0.75,
   "cpuWidth": 1280,
   "cpuHeight": 720,

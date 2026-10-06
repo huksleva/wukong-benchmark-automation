@@ -8,12 +8,16 @@ namespace Wukong.Automation;
 public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOptions options, string directory, Action<string> log)
 {
     private int captureIndex;
+    private string? latestCapture;
     public async Task<OcrPage> ObserveAsync(string name, CancellationToken token)
     {
-        var path = Path.Combine(directory, $"{++captureIndex:0000}-{name}.png");
+        var slot = captureIndex++ % options.MaxDiagnosticFrames;
+        var path = Path.Combine(directory, $"diagnostic-{slot:0000}.png");
         window.Capture(path);
+        latestCapture = path;
         var page = await ocr.ReadAsync(path, token);
-        File.WriteAllText(Path.ChangeExtension(path, ".json"), JsonSerializer.Serialize(page, JsonDefaults.Options));
+        File.WriteAllText(Path.ChangeExtension(path, ".json"), JsonSerializer.Serialize(new
+        { page.Width, page.Height, page.Lines, step = name, observedAt = DateTimeOffset.Now }, JsonDefaults.Options));
         return page;
     }
 
@@ -24,7 +28,8 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         !(key == "superResolutionScale" && OcrPage.Normalize(l.Text).Contains("sampling", StringComparison.Ordinal))
         && !(key == "rayTracing" && (OcrPage.Normalize(l.Text).Contains("level", StringComparison.Ordinal)
             || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)))
-        && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)));
+        && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)))
+        ?? (key is "start" or "continue" or "settings" or "confirm" or "apply" ? page.Find(Labels(key)) : null);
 
     public async Task WaitForMenuAsync(CancellationToken token)
     {
@@ -94,9 +99,45 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             else settings.Add(await SetChoiceAsync("rayTracing", ["Off"], token));
         }
         await ApplyAsync(token);
-        await ObserveAsync("applied-settings", token);
-        log($"{profile.Name} profile applied and values read back from the UI.");
+        // A preset or RT switch can override another choice. Check the final state
+        // after Apply rather than accepting each intermediate selection as effective.
+        await ClickTabAsync("displayTab", token);
+        await VerifyChoiceAsync("vsync", ["Off"], token);
+        await VerifyChoiceAsync("frameCap", ["Off", "Unlimited", "No Limit", "Unlimited FPS"], token);
+        var finalResolution = await ReadRowAsync("resolution", token);
+        if (!new string(finalResolution.Value.Where(char.IsDigit).ToArray()).Contains(requested, StringComparison.Ordinal))
+            throw new InvalidOperationException("Display resolution changed after Apply.");
+        SaveEvidence("display-settings");
+        await ClickTabAsync("graphicsTab", token);
+        await VerifyChoiceAsync("superResolutionMode", ["TSR"], token);
+        await VerifyChoiceAsync("superResolutionScale", [profile.ResolutionScale.ToString(CultureInfo.InvariantCulture)], token);
+        await VerifyChoiceAsync("frameGeneration", ["Off"], token);
+        if (profile.Name == "CPU") await VerifyChoiceAsync("viewDistance", ["High"], token);
+        var recordedRt = settings.First(s => Exact(s.Label, Labels("rayTracing")[0]));
+        if (recordedRt.Value != "Unavailable") await VerifyChoiceAsync("rayTracing", [recordedRt.Value], token);
+        var recordedRtQuality = settings.FirstOrDefault(s => Exact(s.Label, Labels("rayTracingQuality")[0]));
+        if (recordedRtQuality is not null) await VerifyChoiceAsync("rayTracingQuality", [recordedRtQuality.Value], token);
+        var finalPreset = await ReadRowAsync("preset", token);
+        // High view distance intentionally turns the Low preset into Custom.
+        if (profile.Name == "GPU" && !Matches(finalPreset.Value, ["Cinematic", "Custom"]))
+            throw new InvalidOperationException("GPU graphics preset changed unexpectedly after Apply.");
+        settings.Add(new("Effective graphics preset", finalPreset.Value, "UI verified after Apply"));
+        SaveEvidence("graphics-settings");
+        log($"{profile.Name} profile applied; final values verified after Apply.");
         return (settings, warnings);
+    }
+
+    private void SaveEvidence(string name)
+    {
+        if (latestCapture is null) return;
+        File.Copy(latestCapture, Path.Combine(directory, name + ".png"), true);
+        File.Copy(Path.ChangeExtension(latestCapture, ".json"), Path.Combine(directory, name + ".json"), true);
+    }
+
+    private async Task VerifyChoiceAsync(string key, string[] choices, CancellationToken token)
+    {
+        var row = await ReadRowAsync(key, token);
+        if (!Matches(row.Value, choices)) throw new InvalidOperationException($"After Apply, {key} is '{row.Value}', expected {string.Join(" / ", choices)}.");
     }
 
     private async Task ClickTabAsync(string key, CancellationToken token)
@@ -104,6 +145,8 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         // Tab labels are matched exactly to avoid clicking a setting containing 'graphics'.
         var page = await ObserveAsync(key, token);
         var tab = page.Lines.FirstOrDefault(l => Labels(key).Any(s => Exact(l.Text, s)))
+            ?? page.Lines.SelectMany(l => l.Words).Where(w => Labels(key).Any(s => Exact(w.Text, s)))
+                .Select(w => new OcrLine(w.Text, [w])).FirstOrDefault()
             ?? throw new InvalidOperationException($"Cannot find {key} tab.");
         window.Click(tab.Bounds.CenterX, tab.Bounds.CenterY);
         await Pause(token);
