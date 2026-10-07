@@ -241,5 +241,12 @@ Test("agreeing OCR sources do not create a conflicting average", () =>
         Line("28 FPS", 261, 350, 60), Line("Minimum FPS 21", 600, 400), Line("Maximum FPS 32", 1000, 400)]);
     Equal(28d, ResultParser.Parse(page).AverageFps);
 });
+Test("duplicate agreeing sources cannot hide a nearby conflicting value", () =>
+{
+    var page = new OcrPage(1920, 1080, [Line("Average FPS", 200, 400), Line("28 FPS", 260, 350, 60),
+        Line("28 FPS", 261, 350, 60), Line("29 FPS", 262, 350, 60),
+        Line("Minimum FPS 21", 600, 400), Line("Maximum FPS 32", 1000, 400)]);
+    Throws<InvalidDataException>(() => ResultParser.Parse(page));
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

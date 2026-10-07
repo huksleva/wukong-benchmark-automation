@@ -52,8 +52,8 @@ public static class ResultParser
         if (candidates.Length > 1)
         {
             static double Distance(Box a, Box b) => Math.Abs(a.CenterY - b.CenterY) + Math.Abs(a.CenterX - b.CenterX) * .5;
-            if (candidates[0].Numbers[0] != candidates[1].Numbers[0]
-                && Math.Abs(Distance(candidates[0].Bounds, bounds) - Distance(candidates[1].Bounds, bounds)) < 8)
+            if (candidates.Skip(1).Any(candidate => candidate.Numbers[0] != candidates[0].Numbers[0]
+                && Math.Abs(Distance(candidates[0].Bounds, bounds) - Distance(candidate.Bounds, bounds)) < 8))
                 return null; // Ambiguous OCR must fail rather than silently invent a result.
         }
         return candidates[0].Numbers[0];
