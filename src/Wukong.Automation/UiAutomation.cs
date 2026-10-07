@@ -36,7 +36,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)
             || OcrPage.Normalize(l.Text).Contains("уровень", StringComparison.Ordinal)
             || OcrPage.Normalize(l.Text).Contains("качество", StringComparison.Ordinal)))
-        && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)))
+        && Labels(key).Any(s => UiLabels.Matches(l.Text, s)))
         ?? (key is "start" or "continue" or "settings" or "confirm" or "apply" ? page.Find(Labels(key)) : null);
 
     private OcrLine? Confirmation(OcrPage page) => page.Lines.FirstOrDefault(line =>

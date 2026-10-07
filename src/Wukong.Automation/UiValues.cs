@@ -7,7 +7,7 @@ public static class UiValues
 {
     public static string Normalize(string value)
     {
-        var text = OcrPage.Normalize(value.Replace('×', 'x').Trim('<', '>', ' ', '%'));
+        var text = OcrPage.Normalize(value.Replace('×', 'x').Replace('х', 'x').Trim('<', '>', ' ', '%'));
         text = Regex.Replace(text, @"(\d+)\s*x\s*(\d+)", "$1x$2");
         return text switch
         {

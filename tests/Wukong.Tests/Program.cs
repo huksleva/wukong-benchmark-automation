@@ -162,5 +162,13 @@ Test("localized UI values and resolution separators compare correctly", () =>
     Equal(UiValues.Normalize("High"), UiValues.Normalize("Высокое"));
     Equal(UiValues.Normalize("1280x720"), UiValues.Normalize("1280 × 720"));
 });
+Test("actual Russian OCR setting typo resolves without confusing other rows", () =>
+{
+    Equal(true, UiLabels.Matches("Вертикальная синхщ)низация", "Вертикальная синхронизация"));
+    Equal(false, UiLabels.Matches("Порог частоты кадров", "Вертикальная синхронизация"));
+    Equal(false, UiLabels.Matches("Уровень полной трассировки лучей", "Полная трассировка лучей"));
+    Equal(false, UiLabels.Matches("Выйти", "да"));
+    Equal(UiValues.Normalize("1280x720"), UiValues.Normalize("1280х720"));
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

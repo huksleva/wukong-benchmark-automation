@@ -21,7 +21,8 @@ public sealed class WindowsOcr
         var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(path));
         using var stream = await file.OpenReadAsync();
         var decoder = await BitmapDecoder.CreateAsync(stream);
-        var scale = Math.Min(1, (double)OcrEngine.MaxImageDimension / Math.Max(decoder.PixelWidth, decoder.PixelHeight));
+        var scale = Math.Min(Math.Max(1, 1920d / decoder.PixelWidth),
+            (double)OcrEngine.MaxImageDimension / Math.Max(decoder.PixelWidth, decoder.PixelHeight));
         var transform = new BitmapTransform
         {
             ScaledWidth = (uint)(decoder.PixelWidth * scale), ScaledHeight = (uint)(decoder.PixelHeight * scale)

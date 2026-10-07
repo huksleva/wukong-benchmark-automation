@@ -31,7 +31,7 @@ public sealed class RunnerOptions
         ["rayTracing"] = ["full ray tracing", "полная трассировка лучей"],
         ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality", "уровень полной трассировки лучей", "качество трассировки лучей"],
         ["vsync"] = ["v sync", "vsync", "vertical sync", "вертикальная синхронизация", "верт синхронизация", "верт синхр"],
-        ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "ограничение кадров"],
+        ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "порог частоты кадров", "ограничение кадров"],
         ["resolution"] = ["display resolution", "resolution", "разрешение экрана", "разрешение"],
         ["apply"] = ["apply settings", "apply", "применить настройки", "применить"],
         ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test", "тест быстродействия", "начать тестирование", "запустить тестирование", "начать тест", "запустить тест"],
