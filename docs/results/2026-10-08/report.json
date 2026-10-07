@@ -1,0 +1,256 @@
+{
+  "status": "completed",
+  "createdAt": "2026-10-08T01:23:25.6088756+03:00",
+  "machine": {
+    "os": "Microsoft Windows 10.0.19045",
+    "cpu": [
+      "AMD Ryzen 5 5560U with Radeon Graphics"
+    ],
+    "gpu": [
+      "AMD Radeon(TM) Graphics"
+    ],
+    "ramGiB": 15.4,
+    "driverVersions": [
+      "31.0.21925.1001"
+    ],
+    "logicalProcessors": 12,
+    "architecture": "X64",
+    "warnings": []
+  },
+  "passes": [
+    {
+      "name": "CPU",
+      "startedAt": "2026-10-08T01:23:25.62944+03:00",
+      "finishedAt": "2026-10-08T01:30:07.3914344+03:00",
+      "profileDescription": "720p by default, low graphics, 50% internal resolution, high view distance, ray tracing and frame generation off; VSync, motion blur and the frame cap off. Reduces GPU work while retaining scene submission work on the CPU.",
+      "metrics": {
+        "averageFps": 27,
+        "minimumFps": 22,
+        "maximumFps": 32,
+        "fps95PercentAbove": 24
+      },
+      "settings": [
+        {
+          "label": "ResolutionSizeX",
+          "value": "1280",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "ResolutionSizeY",
+          "value": "720",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastUserConfirmedResolutionSizeX",
+          "value": "1280",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastUserConfirmedResolutionSizeY",
+          "value": "720",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "FullscreenMode",
+          "value": "2",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastConfirmedFullscreenMode",
+          "value": "2",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "bUseVSync",
+          "value": "False",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "FrameRateLimit",
+          "value": "0.000000",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "bUseDynamicResolution",
+          "value": "False",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "v sync",
+          "value": "\u0412\u044B\u043A\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "frame rate cap",
+          "value": "\u0412\u044B\u043A\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "motion blur",
+          "value": "\u0412\u044B\u043A\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "Display resolution",
+          "value": "1280\u0445720",
+          "source": "UI verified"
+        },
+        {
+          "label": "graphics preset",
+          "value": "\u041D\u0438\u0437\u043A. \u2014",
+          "source": "UI verified"
+        },
+        {
+          "label": "super resolution sampling",
+          "value": "TSR",
+          "source": "UI verified"
+        },
+        {
+          "label": "frame generation",
+          "value": "\u0432\u044B\u043A\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "super resolution sharpness",
+          "value": "50",
+          "source": "UI verified"
+        },
+        {
+          "label": "view distance quality",
+          "value": "\u0412\u044B\u0441\u043E\u043A. \u201E",
+          "source": "UI verified"
+        },
+        {
+          "label": "Full ray tracing",
+          "value": "Unavailable",
+          "source": "No available UI control was found"
+        },
+        {
+          "label": "Effective graphics preset",
+          "value": "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A.",
+          "source": "UI verified after Apply"
+        }
+      ],
+      "resultScreenshot": "cpu/result.png",
+      "rawOcr": "cpu/result-ocr.json",
+      "warnings": [
+        "CPU-biased settings do not prove a CPU bottleneck. GPU utilization is not measured; a weak GPU can still limit this pass."
+      ]
+    },
+    {
+      "name": "GPU",
+      "startedAt": "2026-10-08T01:30:09.4216904+03:00",
+      "finishedAt": "2026-10-08T01:37:02.3804472+03:00",
+      "profileDescription": "1920x1080 by default, cinematic graphics, TSR at 100%, highest available full ray tracing, frame generation off; VSync, motion blur and the frame cap off. Unsupported ray tracing is explicitly recorded as a fallback.",
+      "metrics": {
+        "averageFps": 2,
+        "minimumFps": 2,
+        "maximumFps": 2,
+        "fps95PercentAbove": 2
+      },
+      "settings": [
+        {
+          "label": "ResolutionSizeX",
+          "value": "1920",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "ResolutionSizeY",
+          "value": "1080",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastUserConfirmedResolutionSizeX",
+          "value": "1920",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastUserConfirmedResolutionSizeY",
+          "value": "1080",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "FullscreenMode",
+          "value": "1",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "LastConfirmedFullscreenMode",
+          "value": "1",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "bUseVSync",
+          "value": "False",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "FrameRateLimit",
+          "value": "0.000000",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "bUseDynamicResolution",
+          "value": "False",
+          "source": "INI request; effective settings are verified separately in the UI"
+        },
+        {
+          "label": "v sync",
+          "value": "\u0412\u044B\u044E\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "frame rate cap",
+          "value": "\u0412\u044B\u044E\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "motion blur",
+          "value": "\u0412\u044B\u044E\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "Display resolution",
+          "value": "1920\u04451080",
+          "source": "UI verified"
+        },
+        {
+          "label": "graphics preset",
+          "value": "\u0420\u0435\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D.",
+          "source": "UI verified"
+        },
+        {
+          "label": "super resolution sampling",
+          "value": "TSR",
+          "source": "UI verified"
+        },
+        {
+          "label": "frame generation",
+          "value": "\u0412\u044B\u043A\u043B.",
+          "source": "UI verified"
+        },
+        {
+          "label": "super resolution sharpness",
+          "value": "100",
+          "source": "UI verified"
+        },
+        {
+          "label": "Full ray tracing",
+          "value": "Unavailable",
+          "source": "No available UI control was found"
+        },
+        {
+          "label": "Effective graphics preset",
+          "value": "\u0420\u0435\u0430\u043B\u0438\u0441\u0442\u0438\u0447\u043D.",
+          "source": "UI verified after Apply"
+        }
+      ],
+      "resultScreenshot": "gpu/result.png",
+      "rawOcr": "gpu/result-ocr.json",
+      "warnings": [
+        "Full ray tracing was not available as a verifiable UI control on this hardware/build; GPU pass uses cinematic raster graphics."
+      ]
+    }
+  ],
+  "error": null
+}

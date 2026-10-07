@@ -1,0 +1,22 @@
+{
+  "steamAppId": 3132990,
+  "steamBuildId": "15365379",
+  "automationCommit": "7a00399128e71979987c1cea5d6b72d3b0c88b35",
+  "originalIniRestoredByteForByte": true,
+  "files": {
+    "report.json": "8c4e9388b528408a4c66bb8cf2a2ea4c089385be67fec9840b90066c74e0751c",
+    "report.html": "5b8569607942f24c4457e4d06c2a674e60f17d24e3c7748b61b2f2ad0d3d9e8f",
+    "cpu/result.png": "2ff324914ef0aa57a986d17656dcbee6f7276bda6354440a9776cff4967d89ac",
+    "cpu/result-ocr.json": "29c0eae84dbdcf69fc3d0b075f153efde0ab861ceb0a12fb11eac4096e260377",
+    "cpu/display-settings.png": "4ffa926260a7c3cc5a290c020a3adf765227dc5c83d28f4a164eddd2f800e5cf",
+    "cpu/display-settings.json": "6c8b3c845ccae72a49c0ef8c87b0f947dbefe73e04ca53127b93b25a0308ee3f",
+    "cpu/graphics-settings.png": "e820bb258cacfaa704346d8b279684ff286ad05a338e303b8fd6d56e1a2f9a5d",
+    "cpu/graphics-settings.json": "755c2986aa34d0d8a300cee6259bdfc07fb5d3828212f1c55ffd481836d17468",
+    "gpu/result.png": "f842f037d5db2a0eff110903c5320cd98f38bccf113820a04e4ea25bb020b787",
+    "gpu/result-ocr.json": "977431c1f16b239d6b0751a0c3f6638b17e20b7522a322133c1ebb26eefce3ce",
+    "gpu/display-settings.png": "213b8f2a210b170442098b4424c748dcd77547a73deff44aa210ab2d1a99de26",
+    "gpu/display-settings.json": "ce543d525af327e93547ddb61ec9ccfa59aab7148b96da6c8f424b52155b48dc",
+    "gpu/graphics-settings.png": "a4721f216d608b3d0830d399f18adc03ec9f73f6aa40d829b763bcf9386fcdd6",
+    "gpu/graphics-settings.json": "1ee386886379ed29d965d9c765ae8e822e9e29288693a2ce7525760bd5d55eaa"
+  }
+}
