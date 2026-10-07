@@ -223,21 +223,28 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             var page = await ObserveAsync(key, token);
             if (RowFrom(page, key) is { } row)
             {
-                if (string.IsNullOrWhiteSpace(row.Value) && latestCapture is not null)
-                {
-                    var height = Math.Max(24, row.Label.Bounds.Height * 2);
-                    var region = new Box(page.Width * .4, Math.Max(0, row.Label.Bounds.CenterY - height / 2), page.Width * .22, height);
-                    var detail = await ocr.ReadRegionAsync(latestCapture, region, token);
-                    var value = UiRows.ReadValue(detail, row.Label, Labels(key));
-                    if (!string.IsNullOrWhiteSpace(value.Text)) row = row with { Value = value.Text, ValueX = value.CenterX ?? row.ValueX };
-                }
-                return row;
+                return await EnrichRowAsync(row, key, token);
             }
             window.Scroll(-3);
             await Pause(token);
         }
         if (optional) return null;
         throw new InvalidOperationException($"Cannot find setting '{key}'. Review screenshots and configure labels for this build.");
+    }
+
+    private async Task<Row> EnrichRowAsync(Row row, string key, CancellationToken token)
+    {
+        // Read small slider digits from a magnified crop: at 720p full-screen
+        // OCR can turn 50 into 5П even when the setting was applied correctly.
+        if ((key == "superResolutionScale" || string.IsNullOrWhiteSpace(row.Value)) && latestCapture is not null)
+        {
+            var height = Math.Max(24, row.Label.Bounds.Height * 2);
+            var region = new Box(row.Page.Width * .4, Math.Max(0, row.Label.Bounds.CenterY - height / 2), row.Page.Width * .22, height);
+            var detail = await ocr.ReadRegionAsync(latestCapture, region, token);
+            var value = UiRows.ReadValue(detail, row.Label, Labels(key));
+            if (!string.IsNullOrWhiteSpace(value.Text)) row = row with { Value = value.Text, ValueX = value.CenterX ?? row.ValueX };
+        }
+        return row;
     }
 
     private async Task<Row> ReadRowAsync(string key, CancellationToken token) =>
@@ -258,6 +265,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             {
                 var current = RowFrom(await ObserveAsync(key + "-slider", token), key);
                 if (current is null) break;
+                current = await EnrichRowAsync(current, key, token);
                 if (Matches(current.Value, choices)) return new(Labels(key)[0], current.Value, "UI verified");
                 if (int.TryParse(current.Value.Trim().TrimEnd('%'), out var numeric) && numeric > target) break;
                 window.Key(NativeWindow.Right);
