@@ -86,7 +86,7 @@ public sealed class NativeWindow(nint handle)
     {
         Focus();
         var bounds = ClientBounds();
-        SetCursorPos(bounds.X + (int)(bounds.Width * .7), bounds.Y + bounds.Height / 2);
+        SetCursorPos(bounds.X + (int)(bounds.Width * .4), bounds.Y + bounds.Height / 2);
         Send([new() { Type = 0, Data = new() { Mouse = new() { MouseData = unchecked((uint)(ticks * 120)), Flags = 0x800 } } }]);
     }
 

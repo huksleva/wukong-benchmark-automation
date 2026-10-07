@@ -170,5 +170,20 @@ Test("actual Russian OCR setting typo resolves without confusing other rows", ()
     Equal(false, UiLabels.Matches("Выйти", "да"));
     Equal(UiValues.Normalize("1280x720"), UiValues.Normalize("1280х720"));
 });
+Test("actual settings column left of screen center remains readable", () =>
+{
+    var label = Line("Вертикальная синхронизация", 226, 440, 210);
+    var page = new OcrPage(1280, 720, [label, Line("Выкл.", 573, 440, 40), Line("Help text", 800, 440)]);
+    var value = UiRows.ReadValue(page, label, ["вертикальная синхронизация"]);
+    Equal("Выкл.", value.Text);
+    Equal<double?>(593d, value.CenterX);
+});
+Test("merged OCR label and value have distinct input target", () =>
+{
+    var label = new OcrLine("Frame Generation Off", [new("Frame", new(200, 400, 60, 20)), new("Generation", new(270, 400, 100, 20)), new("Off", new(570, 400, 40, 20))]);
+    var value = UiRows.ReadValue(new(1280, 720, [label]), label, ["frame generation"]);
+    Equal("Off", value.Text);
+    Equal<double?>(590d, value.CenterX);
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

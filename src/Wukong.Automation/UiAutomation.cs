@@ -181,24 +181,13 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         await Pause(token);
     }
 
-    private sealed record Row(OcrPage Page, OcrLine Label, string Value);
+    private sealed record Row(OcrPage Page, OcrLine Label, string Value, double ValueX);
     private Row? RowFrom(OcrPage page, string key)
     {
         var label = Label(page, key);
         if (label is null) return null;
-        var values = page.Lines.SelectMany(l => l.Words)
-            .Where(w => w.Bounds.X >= page.Width * .48 && w.Bounds.X > label.Bounds.X + label.Bounds.Width
-                && Math.Abs(w.Bounds.CenterY - label.Bounds.CenterY) < Math.Max(14, label.Bounds.Height * .8))
-            .OrderBy(w => w.Bounds.X).Select(w => w.Text).ToArray();
-        var value = string.Join(" ", values);
-        // Some OCR engines merge label and value into a single line.
-        if (value.Length == 0)
-        {
-            var labelText = Labels(key).OrderByDescending(s => s.Length).FirstOrDefault(s =>
-                OcrPage.Normalize(label.Text).StartsWith(OcrPage.Normalize(s), StringComparison.Ordinal));
-            if (labelText is not null) value = OcrPage.Normalize(label.Text)[OcrPage.Normalize(labelText).Length..].Trim();
-        }
-        return new(page, label, value);
+        var value = UiRows.ReadValue(page, label, Labels(key));
+        return new(page, label, value.Text, value.CenterX ?? page.Width * options.ValueColumnX);
     }
 
     private async Task<Row?> FindRowAsync(string key, CancellationToken token, bool optional = false)
@@ -228,7 +217,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         // Numeric sliders are moved left to their lower bound before incrementing.
         if (choices.Length == 1 && int.TryParse(choices[0], out var target))
         {
-            window.Click(row.Page.Width * options.ValueColumnX, row.Label.Bounds.CenterY);
+            window.Click(row.ValueX, row.Label.Bounds.CenterY);
             for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Left); await Task.Delay(12, token); }
             for (var i = 0; i < steps; i++)
             {
@@ -248,7 +237,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             {
                 if (Matches(row.Value, choices)) return new(Labels(key)[0], row.Value, "UI verified");
                 if (!seen.Add(row.Value)) break;
-                window.Click(row.Page.Width * options.ValueColumnX, row.Label.Bounds.CenterY);
+                window.Click(row.ValueX, row.Label.Bounds.CenterY);
                 window.Key(direction == 0 ? NativeWindow.Right : NativeWindow.Left);
                 await Pause(token);
                 var page = await ObserveAsync(key + "-change", token);
