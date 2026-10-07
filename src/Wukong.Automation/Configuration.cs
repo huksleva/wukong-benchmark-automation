@@ -33,7 +33,7 @@ public sealed class RunnerOptions
         ["vsync"] = ["v sync", "vsync", "vertical sync", "вертикальная синхронизация", "верт синхронизация", "верт синхр"],
         ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "порог частоты кадров", "ограничение кадров"],
         ["resolution"] = ["display resolution", "resolution", "разрешение экрана", "разрешение"],
-        ["apply"] = ["apply settings", "apply", "применить настройки", "применить"],
+        ["apply"] = ["apply settings", "apply changes", "apply", "применить изменения настроек графики", "применить настройки", "применить"],
         ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test", "тест быстродействия", "начать тестирование", "запустить тестирование", "начать тест", "запустить тест"],
         ["confirm"] = ["confirm", "yes", "keep changes", "подтвердить", "да", "сохранить изменения"],
         ["continue"] = ["press any key", "press any button", "press enter", "press to continue", "click to continue", "click anywhere", "нажмите любую клавишу", "нажмите любую кнопку", "нажмите чтобы продолжить", "нажмите для продолжения"]

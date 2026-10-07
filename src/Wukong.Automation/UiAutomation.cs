@@ -34,6 +34,10 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     {
         var isSetting = key is not ("start" or "continue" or "settings" or "confirm" or "apply");
         var candidates = page.Lines.Where(line => !isSetting || line.Bounds.X < page.Width * .62)
+            .Where(line => key != "apply" || (!OcrPage.Normalize(line.Text).Contains("recommended", StringComparison.Ordinal)
+                && !OcrPage.Normalize(line.Text).Contains("рекомендуем", StringComparison.Ordinal)))
+            .Where(line => key != "rayTracing" || (line.Bounds.X >= page.Width * .17
+                && !OcrPage.Normalize(line.Text).Contains("nv", StringComparison.Ordinal)))
             .Where(line => !(key == "superResolutionScale" && new[] { "sampling", "технология", "выборка" }.Any(word => OcrPage.Normalize(line.Text).Contains(word, StringComparison.Ordinal)))
                 && !(key == "rayTracing" && new[] { "level", "quality", "уровень", "качество" }.Any(word => OcrPage.Normalize(line.Text).Contains(word, StringComparison.Ordinal)))).ToArray();
         return candidates.FirstOrDefault(line => Labels(key).Any(label => Exact(line.Text, label)))
@@ -111,8 +115,8 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         }
         if (rt is null)
         {
-            if (profile.RayTracing) warnings.Add("Full ray tracing control is absent on this hardware/build; GPU pass uses cinematic raster graphics.");
-            settings.Add(new("Full ray tracing", "Unavailable", "UI control absent"));
+            if (profile.RayTracing) warnings.Add("Full ray tracing was not available as a verifiable UI control on this hardware/build; GPU pass uses cinematic raster graphics.");
+            settings.Add(new("Full ray tracing", "Unavailable", "No available UI control was found"));
         }
         else
         {
