@@ -46,7 +46,7 @@ public sealed class SettingsBackup
         };
         foreach (var (k, v) in values) ini.Set(section, k, v);
         foreach (var key in new[] { "ViewDistance", "AntiAliasing", "Shadow", "GlobalIllumination", "Reflection", "PostProcess", "Texture", "Effects", "Foliage", "Shading" })
-            ini.Set("ScalabilityGroups", $"sg.{key}Quality", profile.Name == "GPU" ? "4" : key == "ViewDistance" ? "3" : "0");
+            ini.Set("ScalabilityGroups", $"sg.{key}Quality", profile.Name == "GPU" ? "4" : key == "ViewDistance" ? "2" : "0");
         touched.Add("GameUserSettings.ini");
         File.WriteAllText(path, ini.ToString(), new UTF8Encoding(false));
         return values.Select(v => new SettingEvidence(v.Key, v.Value, "INI request; effective settings are verified separately in the UI")).ToArray();

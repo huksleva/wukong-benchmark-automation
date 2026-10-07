@@ -87,7 +87,13 @@ public sealed class NativeWindow(nint handle)
         Focus();
         var bounds = ClientBounds();
         SetCursorPos(bounds.X + (int)(bounds.Width * .4), bounds.Y + bounds.Height / 2);
-        Send([new() { Type = 0, Data = new() { Mouse = new() { MouseData = unchecked((uint)(ticks * 120)), Flags = 0x800 } } }]);
+        // This game's menus use one wheel event as one navigation step. A single
+        // event with a large delta does not reliably scroll to the top.
+        for (var i = 0; i < Math.Abs(ticks); i++)
+        {
+            Send([new() { Type = 0, Data = new() { Mouse = new() { MouseData = unchecked((uint)(Math.Sign(ticks) * 120)), Flags = 0x800 } } }]);
+            Thread.Sleep(80);
+        }
     }
 
     private static void Send(Input[] inputs)

@@ -45,4 +45,21 @@ public sealed class WindowsOcr
             l.Words.Select(w => new Wukong.Core.OcrWord(w.Text, new(w.BoundingRect.X / scale, w.BoundingRect.Y / scale,
                 w.BoundingRect.Width / scale, w.BoundingRect.Height / scale))).ToArray())).ToArray());
     }
+    public async Task<OcrPage> ReadRegionAsync(string path, Box region, CancellationToken token)
+    {
+        using var source = new Bitmap(path);
+        var bounds = Rectangle.Intersect(new((int)region.X, (int)region.Y, (int)region.Width, (int)region.Height), new(0, 0, source.Width, source.Height));
+        if (bounds.Width <= 0 || bounds.Height <= 0) throw new ArgumentException("Empty OCR region.");
+        var temp = Path.Combine(Path.GetTempPath(), "wukong-row-" + Guid.NewGuid().ToString("N") + ".png");
+        try
+        {
+            using (var crop = source.Clone(bounds, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+                crop.Save(temp, System.Drawing.Imaging.ImageFormat.Png);
+            var detail = await ReadAsync(temp, token);
+            return new(source.Width, source.Height, detail.Lines.Select(line => new Wukong.Core.OcrLine(line.Text,
+                line.Words.Select(word => new Wukong.Core.OcrWord(word.Text, word.Bounds with { X = word.Bounds.X + bounds.X, Y = word.Bounds.Y + bounds.Y })).ToArray())).ToArray());
+        }
+        finally { if (File.Exists(temp)) File.Delete(temp); }
+    }
+
 }

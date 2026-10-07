@@ -7,10 +7,10 @@
   "benchmarkTimeoutSeconds": 600,
   "pollIntervalMilliseconds": 2000,
   "maxDiagnosticFrames": 40,
-  "valueColumnX": 0.75,
+  "valueColumnX": 0.46,
   "cpuWidth": 1280,
   "cpuHeight": 720,
-  "gpuWidth": null,
-  "gpuHeight": null,
+  "gpuWidth": 1920,
+  "gpuHeight": 1080,
   "enableGpuRayTracing": true
 }

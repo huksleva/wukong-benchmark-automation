@@ -12,24 +12,24 @@ public sealed class RunnerOptions
     public int BenchmarkTimeoutSeconds { get; set; } = 600;
     public int PollIntervalMilliseconds { get; set; } = 2000;
     public int MaxDiagnosticFrames { get; set; } = 40;
-    public double ValueColumnX { get; set; } = .75;
+    public double ValueColumnX { get; set; } = .46;
     public int CpuWidth { get; set; } = 1280;
     public int CpuHeight { get; set; } = 720;
-    public int? GpuWidth { get; set; }
-    public int? GpuHeight { get; set; }
+    public int? GpuWidth { get; set; } = 1920;
+    public int? GpuHeight { get; set; } = 1080;
     public bool EnableGpuRayTracing { get; set; } = true;
     public Dictionary<string, string[]> Labels { get; set; } = new()
     {
         ["settings"] = ["settings", "настройки"],
         ["displayTab"] = ["display", "экран", "дисплей"],
         ["graphicsTab"] = ["graphics", "графика"],
-        ["preset"] = ["graphics preset", "graphics quality", "overall graphics quality", "общее качество графики", "качество графики", "предустановка графики", "общие настройки графики"],
-        ["viewDistance"] = ["view distance quality", "view distance", "дальность прорисовки", "качество дальности прорисовки", "расстояние обзора"],
-        ["superResolutionMode"] = ["super resolution sampling", "сэмплинг суперразрешения", "технология суперразрешения", "метод суперразрешения", "суперразрешение выборка"],
-        ["superResolutionScale"] = ["super resolution sharpness", "super resolution", "суперразрешение", "четкость суперразрешения"],
+        ["preset"] = ["graphics preset", "graphics quality", "overall graphics quality", "набор настроек графики", "общее качество графики", "качество графики", "предустановка графики", "общие настройки графики"],
+        ["viewDistance"] = ["view distance quality", "view distance", "дальность прорисовки", "качество дальности прорисовки", "детализация объектов вдали", "расстояние обзора"],
+        ["superResolutionMode"] = ["super resolution sampling", "избыточная выборка сглаживания", "сэмплинг суперразрешения", "технология суперразрешения", "метод суперразрешения", "суперразрешение выборка"],
+        ["superResolutionScale"] = ["super resolution sharpness", "super resolution", "суперразрешение", "четкость суперразрешения", "степень избыт выборки сглаживания"],
         ["frameGeneration"] = ["frame generation", "генерация кадров", "создание кадров"],
         ["rayTracing"] = ["full ray tracing", "полная трассировка лучей"],
-        ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality", "уровень полной трассировки лучей", "качество трассировки лучей"],
+        ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality", "уровень полная трассировка лучей", "уровень полной трассировки лучей", "качество трассировки лучей"],
         ["vsync"] = ["v sync", "vsync", "vertical sync", "вертикальная синхронизация", "верт синхронизация", "верт синхр"],
         ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "порог частоты кадров", "ограничение кадров"],
         ["resolution"] = ["display resolution", "resolution", "разрешение экрана", "разрешение"],
@@ -69,5 +69,5 @@ public sealed record BenchmarkProfile(string Name, int Width, int Height, string
         "720p by default, low graphics, 50% internal resolution, high view distance, ray tracing and frame generation off; VSync and the frame cap off. Reduces GPU work while retaining scene submission work on the CPU.");
     public static BenchmarkProfile Gpu(RunnerOptions o, int nativeWidth, int nativeHeight) => new("GPU",
         o.GpuWidth ?? nativeWidth, o.GpuHeight ?? nativeHeight, "Cinematic", 100, o.EnableGpuRayTracing,
-        "Native display resolution by default, cinematic graphics, TSR at 100%, highest available full ray tracing, frame generation off; VSync and the frame cap off. Unsupported ray tracing is explicitly recorded as a fallback.");
+        "1920x1080 by default, cinematic graphics, TSR at 100%, highest available full ray tracing, frame generation off; VSync and the frame cap off. Unsupported ray tracing is explicitly recorded as a fallback.");
 }

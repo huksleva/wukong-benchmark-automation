@@ -30,14 +30,16 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     private async Task Pause(CancellationToken token) => await Task.Delay(options.PollIntervalMilliseconds, token);
     private string[] Labels(string key) => options.Labels[key];
     private static bool Exact(string a, string b) => OcrPage.Normalize(a) == OcrPage.Normalize(b);
-    private OcrLine? Label(OcrPage page, string key) => page.Lines.FirstOrDefault(l =>
-        !(key == "superResolutionScale" && new[] { "sampling", "сэмплинг", "технология", "выборка" }.Any(word => OcrPage.Normalize(l.Text).Contains(word, StringComparison.Ordinal)))
-        && !(key == "rayTracing" && (OcrPage.Normalize(l.Text).Contains("level", StringComparison.Ordinal)
-            || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)
-            || OcrPage.Normalize(l.Text).Contains("уровень", StringComparison.Ordinal)
-            || OcrPage.Normalize(l.Text).Contains("качество", StringComparison.Ordinal)))
-        && Labels(key).Any(s => UiLabels.Matches(l.Text, s)))
-        ?? (key is "start" or "continue" or "settings" or "confirm" or "apply" ? page.Find(Labels(key)) : null);
+    private OcrLine? Label(OcrPage page, string key)
+    {
+        var isSetting = key is not ("start" or "continue" or "settings" or "confirm" or "apply");
+        var candidates = page.Lines.Where(line => !isSetting || line.Bounds.X < page.Width * .62)
+            .Where(line => !(key == "superResolutionScale" && new[] { "sampling", "технология", "выборка" }.Any(word => OcrPage.Normalize(line.Text).Contains(word, StringComparison.Ordinal)))
+                && !(key == "rayTracing" && new[] { "level", "quality", "уровень", "качество" }.Any(word => OcrPage.Normalize(line.Text).Contains(word, StringComparison.Ordinal)))).ToArray();
+        return candidates.FirstOrDefault(line => Labels(key).Any(label => Exact(line.Text, label)))
+            ?? candidates.FirstOrDefault(line => Labels(key).Any(label => UiLabels.Matches(line.Text, label)))
+            ?? (!isSetting ? page.Find(Labels(key)) : null);
+    }
 
     private OcrLine? Confirmation(OcrPage page) => page.Lines.FirstOrDefault(line =>
         line.Bounds.CenterY < page.Height * .8 && line.Bounds.CenterX > page.Width * .2
@@ -72,6 +74,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     {
         var settings = new List<SettingEvidence>();
         var warnings = new List<string>();
+        if (profile.Name == "CPU") warnings.Add("CPU-biased settings do not prove a CPU bottleneck. GPU utilization is not measured; a weak GPU can still limit this pass.");
         var page = await ObserveAsync("menu", token);
         if (Label(page, "settings") is { } button && Label(page, "preset") is null)
         {
@@ -99,6 +102,13 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         settings.Add(await SetChoiceAsync("superResolutionScale", [profile.ResolutionScale.ToString(CultureInfo.InvariantCulture)], token, steps: 110));
         if (profile.Name == "CPU") settings.Add(await SetChoiceAsync("viewDistance", ["High"], token));
         var rt = await FindRowAsync("rayTracing", token, optional: true);
+        if (rt is not null && string.IsNullOrWhiteSpace(OcrPage.Normalize(rt.Value)))
+        {
+            window.Click(rt.Label.Bounds.CenterX, rt.Label.Bounds.CenterY);
+            await Pause(token);
+            var support = await ObserveAsync("ray-tracing-support", token);
+            if (support.Find("your graphics card does not support", "ваша видеокарта не поддерживает") is not null) rt = null;
+        }
         if (rt is null)
         {
             if (profile.RayTracing) warnings.Add("Full ray tracing control is absent on this hardware/build; GPU pass uses cinematic raster graphics.");
@@ -206,7 +216,18 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         for (var attempt = 0; attempt < 7; attempt++)
         {
             var page = await ObserveAsync(key, token);
-            if (RowFrom(page, key) is { } row) return row;
+            if (RowFrom(page, key) is { } row)
+            {
+                if (string.IsNullOrWhiteSpace(row.Value) && latestCapture is not null)
+                {
+                    var height = Math.Max(24, row.Label.Bounds.Height * 2);
+                    var region = new Box(page.Width * .4, Math.Max(0, row.Label.Bounds.CenterY - height / 2), page.Width * .22, height);
+                    var detail = await ocr.ReadRegionAsync(latestCapture, region, token);
+                    var value = UiRows.ReadValue(detail, row.Label, Labels(key));
+                    if (!string.IsNullOrWhiteSpace(value.Text)) row = row with { Value = value.Text, ValueX = value.CenterX ?? row.ValueX };
+                }
+                return row;
+            }
             window.Scroll(-3);
             await Pause(token);
         }
