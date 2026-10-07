@@ -32,6 +32,7 @@ public sealed class RunnerOptions
         ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality", "уровень полная трассировка лучей", "уровень полной трассировки лучей", "качество трассировки лучей"],
         ["vsync"] = ["v sync", "vsync", "vertical sync", "вертикальная синхронизация", "верт синхронизация", "верт синхр"],
         ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "порог частоты кадров", "ограничение кадров"],
+        ["motionBlur"] = ["motion blur", "размытие при движении"],
         ["resolution"] = ["display resolution", "resolution", "разрешение экрана", "разрешение"],
         ["apply"] = ["apply settings", "apply changes", "apply", "применить изменения настроек графики", "применить настройки", "применить"],
         ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test", "тест быстродействия", "начать тестирование", "запустить тестирование", "начать тест", "запустить тест"],
@@ -66,8 +67,8 @@ public sealed record BenchmarkProfile(string Name, int Width, int Height, string
     bool RayTracing, string Description)
 {
     public static BenchmarkProfile Cpu(RunnerOptions o) => new("CPU", o.CpuWidth, o.CpuHeight, "Low", 50, false,
-        "720p by default, low graphics, 50% internal resolution, high view distance, ray tracing and frame generation off; VSync and the frame cap off. Reduces GPU work while retaining scene submission work on the CPU.");
+        "720p by default, low graphics, 50% internal resolution, high view distance, ray tracing and frame generation off; VSync, motion blur and the frame cap off. Reduces GPU work while retaining scene submission work on the CPU.");
     public static BenchmarkProfile Gpu(RunnerOptions o, int nativeWidth, int nativeHeight) => new("GPU",
         o.GpuWidth ?? nativeWidth, o.GpuHeight ?? nativeHeight, "Cinematic", 100, o.EnableGpuRayTracing,
-        "1920x1080 by default, cinematic graphics, TSR at 100%, highest available full ray tracing, frame generation off; VSync and the frame cap off. Unsupported ray tracing is explicitly recorded as a fallback.");
+        "1920x1080 by default, cinematic graphics, TSR at 100%, highest available full ray tracing, frame generation off; VSync, motion blur and the frame cap off. Unsupported ray tracing is explicitly recorded as a fallback.");
 }

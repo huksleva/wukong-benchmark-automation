@@ -221,5 +221,12 @@ Test("local numeric OCR reads actual stylized average FPS", () =>
     var image = Path.Combine(AppContext.BaseDirectory, "Fixtures", "actual-cpu-summary.png");
     Equal("27 FPS", numeric.ReadConsensus(image, new(40, 210, 160, 75))?.Text);
 });
+Test("actual split graphics tab is recognized only in navigation column", () =>
+{
+    var tab = Line("Граф И Ка", 220, 470, 120);
+    var page = new OcrPage(1920, 1080, [Line("Графика", 520, 220), tab]);
+    Equal(tab, UiTabs.Find(page, ["графика"]));
+    Equal(null, UiTabs.Find(new(1920, 1080, [page.Lines[0]]), ["графика"]));
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

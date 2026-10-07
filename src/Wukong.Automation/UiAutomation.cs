@@ -87,6 +87,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         await ClickTabAsync("displayTab", token);
         settings.Add(await SetChoiceAsync("vsync", ["Off"], token));
         settings.Add(await SetChoiceAsync("frameCap", ["Off", "Unlimited", "No Limit", "Unlimited FPS"], token));
+        settings.Add(await SetChoiceAsync("motionBlur", ["Off"], token));
         var resolution = await ReadRowAsync("resolution", token);
         var digits = new string(resolution.Value.Where(char.IsDigit).ToArray());
         var requested = $"{profile.Width}{profile.Height}";
@@ -145,6 +146,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         await ClickTabAsync("displayTab", token);
         await VerifyChoiceAsync("vsync", ["Off"], token);
         await VerifyChoiceAsync("frameCap", ["Off", "Unlimited", "No Limit", "Unlimited FPS"], token);
+        await VerifyChoiceAsync("motionBlur", ["Off"], token);
         var finalResolution = await ReadRowAsync("resolution", token);
         if (!new string(finalResolution.Value.Where(char.IsDigit).ToArray()).Contains(requested, StringComparison.Ordinal))
             throw new InvalidOperationException("Display resolution changed after Apply.");
@@ -183,10 +185,9 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
 
     private async Task ClickTabAsync(string key, CancellationToken token)
     {
-        // Tab labels are matched exactly to avoid clicking a setting containing 'graphics'.
-        OcrLine? FindTab(OcrPage page) => page.Lines.FirstOrDefault(l => Labels(key).Any(s => Exact(l.Text, s)))
-            ?? page.Lines.SelectMany(l => l.Words).Where(w => Labels(key).Any(s => Exact(w.Text, s)))
-                .Select(w => new OcrLine(w.Text, [w])).FirstOrDefault();
+        // Category navigation is in the left column. OCR may split a word
+        // (actual Russian 'Граф И Ка'); never match the panel heading instead.
+        OcrLine? FindTab(OcrPage page) => UiTabs.Find(page, Labels(key));
         var page = await ObserveAsync(key, token);
         var tab = FindTab(page);
         for (var attempt = 0; tab is null && attempt < 4; attempt++)
