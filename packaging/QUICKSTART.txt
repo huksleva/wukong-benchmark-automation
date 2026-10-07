@@ -1,0 +1,32 @@
+Wukong Benchmark Automation — Windows 10/11 x64
+
+1. Extract the entire ZIP into a folder you can write to.
+2. Launch Wukong.Automation.exe (double-click).
+3. Follow the setup checks. Steam and the FREE Black Myth: Wukong Benchmark Tool
+   (AppID 3132990) are required; the full game is not required.
+4. Sign in to Steam and review first-launch agreements yourself.
+5. During the tests, keep the game window visible and do not use mouse/keyboard.
+6. A successful run opens results/<run>/report.html automatically.
+
+.NET is included in this build. You do not need to install .NET SDK, Git or Visual Studio.
+Windows OCR: English is required. Russian interface recognition additionally requires
+Russian Windows OCR. The doctor command checks availability.
+
+Advanced commands from PowerShell in this folder:
+  .\Wukong.Automation.exe doctor
+  .\Wukong.Automation.exe start
+  .\Wukong.Automation.exe run
+  .\Wukong.Automation.exe --help
+
+The integration status and instructions are available at:
+https://github.com/huksleva/wukong-benchmark-automation#readme
+A passing CI build does not certify real benchmark runs. See docs/VALIDATION.md.
+The file build-info.json identifies this build's source commit.
+
+Русский:
+Распакуйте ZIP полностью и запустите Wukong.Automation.exe двойным щелчком.
+.NET уже включён. Программа проверит установку Steam и бесплатного Benchmark Tool.
+Вход в аккаунт и принятие соглашений требуют вашего решения.
+После подготовки программа сама проходит подсказку продолжения, выбирает
+настройки и запускает два теста. Во время работы не используйте мышь/клавиатуру.
+Итоговый HTML-отчёт откроется автоматически после успешных проходов.

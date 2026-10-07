@@ -4,12 +4,16 @@
 
 ## Требования
 
-1. Windows 10/11 с интерактивным рабочим столом и установленным [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+1. Windows 10/11 x64 с интерактивным рабочим столом. Для готового ZIP из Actions .NET включён в сборку; для сборки из исходников нужен [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Steam, вход в аккаунт и установленный **бесплатный** [Black Myth: Wukong Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/) — AppID `3132990`. Покупка полной игры не требуется.
 3. Компонент English OCR Windows. Для русского интерфейса также нужен русский OCR Windows: утилита автоматически выбирает его при обнаружении русских подписей. `doctor` показывает его доступность. Если русского OCR нет, один раз выберите English в Benchmark Tool. Параметр `-culture=en` может быть переопределён сохранённым языком игры.
 4. Закройте работающий Benchmark Tool, оверлеи и диалоги Steam. Во время запуска оставьте окно теста видимым и не используйте клавиатуру/мышь. Steam и утилита должны работать с одинаковыми правами.
 
 Экран «Нажмите любую клавишу / Press any key/button to continue» утилита проходит автоматически после распознавания подсказки. На загрузку и компиляцию шейдеров отведено до 15 минут. Пользовательские соглашения требуют вашего решения: при первом запуске дождитесь компиляции шейдеров и самостоятельно пройдите первоначальные диалоги. Затем закройте Benchmark Tool перед запуском автоматизации. В Steam используйте обычный вариант запуска и сохраните выбор, чтобы диалог не перекрывал окно.
+
+## Запуск готовой сборки
+
+[Скачайте ZIP из Actions](../README.md#github-actions), распакуйте все файлы в папку, доступную для записи, и запустите `Wukong.Automation.exe` двойным щелчком. Не запускайте EXE внутри ZIP и не переносите только EXE без остальных файлов. .NET, SDK, Git и Visual Studio для готовой сборки не нужны. Программа запускает `start` по умолчанию.
 
 ## Запуск из исходников
 
@@ -56,10 +60,10 @@ dotnet run --project src/Wukong.Automation -c Release -- parse --ocr result-ocr.
 
 ```powershell
 dotnet run --project tests/Wukong.Tests -c Release
-dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release --self-contained false -o artifacts/runner
+dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-x64 --self-contained true -o artifacts/runner
 ```
 
-В каталоге `artifacts/runner` можно запускать `Wukong.Automation.exe doctor` и `Wukong.Automation.exe run`. Для такой сборки нужен установленный .NET 8 Desktop Runtime. GitHub Actions собирает Windows-версию, запускает автоматические проверки и сохраняет архив сборки. [Что проверяет CI и где скачать сборку →](../README.md#github-actions)
+В каталоге `artifacts/runner` можно запускать `Wukong.Automation.exe doctor` и `Wukong.Automation.exe run`. В такую сборку уже включён .NET; его отдельная установка не нужна. GitHub Actions собирает Windows-версию, запускает автоматические проверки и сохраняет архив сборки. [Что проверяет CI и где скачать сборку →](../README.md#github-actions)
 
 ## Диагностика
 

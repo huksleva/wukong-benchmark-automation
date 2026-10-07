@@ -50,7 +50,11 @@
 
 ## Быстрый старт
 
-Нужны Windows 10/11, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0), Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
+Нужны Windows 10/11 **x64**, Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
+
+**Готовая сборка:** [скачайте ZIP из успешного запуска Actions](#github-actions), распакуйте его полностью в доступную для записи папку и запустите **`Wukong.Automation.exe` двойным щелчком**. .NET уже включён; SDK, Git и Visual Studio для этого не нужны. Откроется мастер `start`: он проверит готовность и подскажет установку недостающих компонентов. Вход в Steam и первоначальные соглашения требуют вашего решения.
+
+**Из исходников:** установите [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) и Git, затем выполните:
 
 ```powershell
 git clone https://github.com/huksleva/wukong-benchmark-automation.git
@@ -93,7 +97,7 @@ CPU-профиль уменьшает стоимость рендера, GPU-п�
 
 ```powershell
 dotnet run --project tests/Wukong.Tests -c Release
-dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release --self-contained false -o artifacts/runner
+dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-x64 --self-contained true -o artifacts/runner
 ```
 
 ## GitHub Actions
@@ -105,13 +109,13 @@ dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release --self-
 1. Получает исходники и устанавливает .NET 8 SDK.
 2. Собирает приложение в режиме Release.
 3. Запускает автоматические проверки парсера FPS, INI, отчётов, конфигурации и распознавания стартовых экранов.
-4. Публикует приложение и сохраняет его в артефакт **`wukong-runner-windows`**.
+4. Публикует сборку Windows x64 со встроенным .NET и сохраняет её в артефакт **`wukong-runner-windows`**.
 
-Чтобы скачать сборку, откройте **Actions → Build and checks → успешный запуск для нужного коммита → Artifacts → wukong-runner-windows**. Для скачивания артефактов войдите в GitHub. Распакуйте ZIP полностью; для этой сборки нужен [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0). Затем из распакованной папки можно выполнить:
+Чтобы скачать сборку, откройте **Actions → Build and checks → успешный запуск для нужного коммита → Artifacts → wukong-runner-windows**. Для скачивания артефактов войдите в GitHub. Распакуйте ZIP полностью и запустите `Wukong.Automation.exe` двойным щелчком: откроется мастер подготовки и запуска. **Устанавливать .NET отдельно не нужно.** В архиве есть `QUICKSTART.txt` и `build-info.json` с идентификатором исходного коммита. Артефакты хранятся 14 дней. Из PowerShell в распакованной папке также можно выполнить:
 
 ```powershell
 .\Wukong.Automation.exe doctor
-.\Wukong.Automation.exe run
+.\Wukong.Automation.exe start
 ```
 
 Зелёный статус означает, что сборка и автоматические проверки прошли. **Actions не запускает Steam или Benchmark Tool и не измеряет FPS.** Проверка двух настоящих проходов выполняется локально и описана в [статусе проверки](docs/VALIDATION.md). Workflow находится в [.github/workflows/build.yml](.github/workflows/build.yml).
