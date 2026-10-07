@@ -191,5 +191,18 @@ Test("default and distributed runner configuration can actually launch", () =>
     var config = Path.Combine(AppContext.BaseDirectory, "runner.example.json");
     RunnerOptions.Load(config).Validate();
 });
+Test("actual graphics confirmation applies instead of discarding settings", () =>
+{
+    var apply = Line("Применить", 550, 400);
+    var page = new OcrPage(1280, 720, [Line("Вы точно хотите использовать новые настройки", 300, 300, 600), apply, Line("Закрыть без изменений", 500, 500)]);
+    var options = new RunnerOptions();
+    Equal(apply, UiDialogs.Confirmation(page, options.Labels["confirm"], options.Labels["apply"]));
+});
+Test("footer confirmation and legal agreements are never autoaccepted", () =>
+{
+    var options = new RunnerOptions();
+    Equal(null, UiDialogs.Confirmation(new(1280, 720, [Line("Подтвердить", 900, 680)]), options.Labels["confirm"], options.Labels["apply"]));
+    Equal(null, UiDialogs.Confirmation(new(1280, 720, [Line("Пользовательское соглашение", 300, 200), Line("Да", 550, 400)]), options.Labels["confirm"], options.Labels["apply"]));
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

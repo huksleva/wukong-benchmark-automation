@@ -45,9 +45,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             ?? (!isSetting ? page.Find(Labels(key)) : null);
     }
 
-    private OcrLine? Confirmation(OcrPage page) => page.Lines.FirstOrDefault(line =>
-        line.Bounds.CenterY < page.Height * .8 && line.Bounds.CenterX > page.Width * .2
-        && Labels("confirm").Any(label => Exact(line.Text, label)));
+    private OcrLine? Confirmation(OcrPage page) => UiDialogs.Confirmation(page, Labels("confirm"), Labels("apply"));
 
     public async Task WaitForMenuAsync(CancellationToken token)
     {
@@ -57,10 +55,10 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         {
             await Pause(token);
             var page = await ObserveAsync("startup", token);
-            if (Label(page, "settings") is not null || Label(page, "preset") is not null || Label(page, "start") is not null)
-                return;
             if (StartupScreen.NeedsManualAgreement(page))
                 throw new InvalidOperationException("First launch requires your agreement in Benchmark Tool. Open it once, review the terms yourself, then close it and restart the runner.");
+            if (Label(page, "settings") is not null || Label(page, "preset") is not null || Label(page, "start") is not null)
+                return;
             if (StartupScreen.NeedsContinue(page, Labels("continue")) && continues < 5)
             {
                 var prompt = Label(page, "continue")!;
