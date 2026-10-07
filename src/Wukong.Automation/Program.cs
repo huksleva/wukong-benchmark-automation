@@ -19,6 +19,7 @@ internal static class Program
         try
         {
             if (args[0] is "help" or "--help" or "-h") { Help(); return 0; }
+            if (args[0] is "doctor" or "parse") return ExecuteAsync(args, cancel.Token).GetAwaiter().GetResult();
             using var mutex = new Mutex(false, @"Local\WukongBenchmarkAutomation3132990");
             bool acquired;
             try { acquired = mutex.WaitOne(0); } catch (AbandonedMutexException) { acquired = true; }
