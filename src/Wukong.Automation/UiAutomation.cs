@@ -21,7 +21,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             { log("Waiting for access to the benchmark window..."); await Task.Delay(2000, token); }
         }
         latestCapture = path;
-        var page = await ocr.ReadAsync(path, token);
+        var page = name == "benchmark" ? await ocr.ReadResultAsync(path, token) : await ocr.ReadAsync(path, token);
         File.WriteAllText(Path.ChangeExtension(path, ".json"), JsonSerializer.Serialize(new
         { page.Width, page.Height, page.Lines, step = name, observedAt = DateTimeOffset.Now }, JsonDefaults.Options));
         return page;
@@ -376,7 +376,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             if (metrics != previous) { previous = metrics; continue; }
             var screenshot = Path.Combine(directory, "result.png");
             window.Capture(screenshot);
-            var final = await ocr.ReadAsync(screenshot, token);
+            var final = await ocr.ReadResultAsync(screenshot, token);
             if (!ResultParser.TryParse(final, out var verified) || verified != metrics)
             { previous = null; continue; }
             var raw = Path.Combine(directory, "result-ocr.json");

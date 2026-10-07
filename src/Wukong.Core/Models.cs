@@ -10,7 +10,7 @@ public sealed record Box(double X, double Y, double Width, double Height)
 }
 
 public sealed record OcrWord(string Text, Box Bounds);
-public sealed record OcrLine(string Text, OcrWord[] Words)
+public sealed record OcrLine(string Text, OcrWord[] Words, string? Source = null)
 {
     public Box Bounds => Words.Length == 0 ? new(0, 0, 0, 0) : new(
         Words.Min(w => w.Bounds.X), Words.Min(w => w.Bounds.Y),

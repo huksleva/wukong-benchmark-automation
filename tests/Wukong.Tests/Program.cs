@@ -204,5 +204,22 @@ Test("footer confirmation and legal agreements are never autoaccepted", () =>
     Equal(null, UiDialogs.Confirmation(new(1280, 720, [Line("Подтвердить", 900, 680)]), options.Labels["confirm"], options.Labels["apply"]));
     Equal(null, UiDialogs.Confirmation(new(1280, 720, [Line("Пользовательское соглашение", 300, 200), Line("Да", 550, 400)]), options.Labels["confirm"], options.Labels["apply"]));
 });
+Test("missing average never borrows the neighboring maximum", () =>
+{
+    var page = new OcrPage(1280, 720, [Line("В среднем", 48, 220, 70), Line("Максимум", 48, 292, 70),
+        Line("31 FPS", 48, 314, 70), Line("Минимум", 212, 292, 70), Line("22 FPS", 212, 314, 70)]);
+    Throws<InvalidDataException>(() => ResultParser.Parse(page));
+});
+Test("percentile label number is not the percentile value", () =>
+{
+    var page = Inline() with { Lines = [.. Inline().Lines, Line("5-й перцентиль", 200, 600), Line("24 FPS", 220, 650, 60)] };
+    Equal(24d, ResultParser.Parse(page).Fps95PercentAbove);
+});
+Test("local numeric OCR reads actual stylized average FPS", () =>
+{
+    using var numeric = new NumericOcr();
+    var image = Path.Combine(AppContext.BaseDirectory, "Fixtures", "actual-cpu-summary.png");
+    Equal("27 FPS", numeric.ReadConsensus(image, new(40, 210, 160, 75))?.Text);
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

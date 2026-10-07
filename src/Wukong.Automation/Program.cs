@@ -56,8 +56,14 @@ internal static class Program
         {
             var image = Value("--image"); var raw = Value("--ocr");
             if ((image is null) == (raw is null)) throw new ArgumentException("Use exactly one of --image or --ocr.");
-            var page = raw is not null ? JsonSerializer.Deserialize<OcrPage>(File.ReadAllText(raw), JsonDefaults.Options)
-                ?? throw new InvalidDataException("Empty OCR page.") : await new WindowsOcr().ReadAsync(image!, token);
+            OcrPage page;
+            if (raw is not null) page = JsonSerializer.Deserialize<OcrPage>(File.ReadAllText(raw), JsonDefaults.Options)
+                ?? throw new InvalidDataException("Empty OCR page.");
+            else
+            {
+                using var resultOcr = new WindowsOcr();
+                page = await resultOcr.ReadResultAsync(image!, token);
+            }
             Console.WriteLine(JsonSerializer.Serialize(ResultParser.Parse(page), JsonDefaults.Options));
             return 0;
         }
@@ -98,9 +104,11 @@ internal static class Program
                 g.DrawString("Average FPS 123", font, Brushes.Black, 20, 50);
                 image.Save(scratch, ImageFormat.Png);
             }
-            var ocr = new WindowsOcr();
+            using var ocr = new WindowsOcr();
             var page = await ocr.ReadAsync(scratch, token);
             if (!page.Text.Contains("123", StringComparison.Ordinal)) throw new InvalidOperationException("OCR smoke test failed.");
+            using var numeric = new NumericOcr();
+            Console.WriteLine("Local numeric OCR (Tesseract/model/native libraries): OK");
             Console.WriteLine("English Windows OCR: OK");
             Console.WriteLine("Russian Windows OCR: " + (ocr.SupportsRussian ? "available (automatic UI recognition)" : "not installed; select English in Benchmark Tool"));
         }
@@ -115,7 +123,7 @@ internal static class Program
     private static async Task<int> RunAsync(RunnerOptions options, CancellationToken token)
     {
         var installation = SteamInstallation.Discover(options);
-        var ocr = new WindowsOcr();
+        using var ocr = new WindowsOcr();
         var existing = installation.GameProcesses();
         try { if (existing.Count != 0) throw new InvalidOperationException("Close the existing Benchmark Tool before running automation."); }
         finally { existing.ForEach(p => p.Dispose()); }

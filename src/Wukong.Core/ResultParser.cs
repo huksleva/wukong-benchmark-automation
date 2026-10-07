@@ -9,9 +9,9 @@ public static class ResultParser
     private static readonly Regex Number = new(@"(?<![\w.])\d{1,4}(?:[.,]\d{1,2})?(?![\w.])", RegexOptions.Compiled);
     private static readonly (string Name, string[] Labels)[] Required =
     [
-        ("average", ["average fps", "average frame rate", "average framerate", "средний fps", "средняя частота кадров"]),
-        ("minimum", ["minimum fps", "min fps", "minimum frame rate", "lowest fps", "минимальный fps", "минимальная частота кадров"]),
-        ("maximum", ["maximum fps", "max fps", "maximum frame rate", "highest fps", "максимальный fps", "максимальная частота кадров"])
+        ("average", ["average fps", "average frame rate", "average framerate", "средний fps", "средняя частота кадров", "в среднем", "average"]),
+        ("minimum", ["minimum fps", "min fps", "minimum frame rate", "lowest fps", "минимальный fps", "минимальная частота кадров", "минимум", "minimum"]),
+        ("maximum", ["maximum fps", "max fps", "maximum frame rate", "highest fps", "максимальный fps", "максимальная частота кадров", "максимум", "maximum"])
     ];
 
     public static BenchmarkMetrics Parse(OcrPage page)
@@ -20,7 +20,7 @@ public static class ResultParser
             ?? throw new InvalidDataException($"Cannot read {item.Name} FPS from the benchmark summary.")).ToArray();
         if (values.Any(v => v <= 0 || v > 10000) || values[1] > values[0] || values[0] > values[2])
             throw new InvalidDataException("FPS values are inconsistent (expected minimum <= average <= maximum).");
-        return new(values[0], values[1], values[2], ReadMetric(page, ["95%", "95 %"], exclude95: true));
+        return new(values[0], values[1], values[2], ReadMetric(page, ["95%", "95 %", "5-й перцентиль", "5th percentile"], exclude95: true));
     }
 
     public static bool TryParse(OcrPage page, out BenchmarkMetrics? metrics)
@@ -35,7 +35,7 @@ public static class ResultParser
         if (labelLine is null) return null;
         // The summary can put a number beside, above or below its label. Geometry
         // prevents a different metric, graph axis or hardware name from being read.
-        var ownNumbers = Numbers(labelLine.Text).Where(v => !exclude95 || v != 95).ToArray();
+        var ownNumbers = (exclude95 ? Numbers(labelLine.Text).Skip(1) : Numbers(labelLine.Text)).ToArray();
         if (ownNumbers.Length == 1) return ownNumbers[0];
         var bounds = labelLine.Bounds;
         var candidates = page.Lines.Where(l => !ReferenceEquals(l, labelLine))
@@ -43,6 +43,9 @@ public static class ResultParser
             .Where(c => c.Numbers.Length == 1 && Regex.IsMatch(c.Line.Text.Trim(), @"^\d+(?:[.,]\d+)?(?:\s*FPS)?$", RegexOptions.IgnoreCase))
             .Where(c => Math.Abs(c.Bounds.CenterX - bounds.CenterX) < Math.Max(bounds.Width, page.Width * .09)
                 && Math.Abs(c.Bounds.CenterY - bounds.CenterY) < page.Height * .15)
+            .Where(c => !Required.Select(item => page.Find(item.Labels)).Where(other => other is not null && !ReferenceEquals(other, labelLine))
+                .Any(other => Math.Abs(c.Bounds.CenterY - other!.Bounds.CenterY) + Math.Abs(c.Bounds.CenterX - other.Bounds.CenterX) * .5
+                    < Math.Abs(c.Bounds.CenterY - bounds.CenterY) + Math.Abs(c.Bounds.CenterX - bounds.CenterX) * .5))
             .OrderBy(c => Math.Abs(c.Bounds.CenterY - bounds.CenterY) + Math.Abs(c.Bounds.CenterX - bounds.CenterX) * .5)
             .ToArray();
         if (candidates.Length == 0) return null;

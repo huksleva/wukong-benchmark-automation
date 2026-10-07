@@ -1,0 +1,14 @@
+# Third-party notices
+
+The project code is MIT licensed. Its distributed OCR dependencies keep their own licenses.
+
+| Component | Use | License / source |
+|---|---|---|
+| Tesseract .NET wrapper 5.2.0 | Native OCR binding | [Apache-2.0](packaging/licenses/Tesseract-wrapper-LICENSE.txt), [charlesw/tesseract](https://github.com/charlesw/tesseract) |
+| Tesseract OCR native engine | Local FPS digit recognition | [Apache-2.0](packaging/licenses/Tesseract-LICENSE.txt), [tesseract-ocr/tesseract](https://github.com/tesseract-ocr/tesseract) |
+| Leptonica | Native image processing dependency | [BSD-style license](packaging/licenses/Leptonica-LICENSE.txt), [DanBloomberg/leptonica](https://github.com/DanBloomberg/leptonica) |
+| English trained model | Numeric OCR model included with the app | [Apache-2.0](src/Wukong.Automation/tessdata/LICENSE), [pinned source and SHA-256](src/Wukong.Automation/tessdata/README.md) |
+
+Copyright 2012–2022 Charles Weld applies to the .NET wrapper. It includes InteropDotNet, Copyright 2014 Andrey Akinshin, under the MIT license reproduced in the wrapper notice.
+
+Windows OCR is a Windows component. Steam and Black Myth: Wukong Benchmark Tool are separately installed products and are not redistributed by this repository.
