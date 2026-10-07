@@ -234,13 +234,30 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
 
     private async Task<Row> EnrichRowAsync(Row row, string key, CancellationToken token)
     {
-        // Read small slider digits from a magnified crop: at 720p full-screen
-        // OCR can turn 50 into 5П even when the setting was applied correctly.
-        if ((key == "superResolutionScale" || string.IsNullOrWhiteSpace(row.Value)) && latestCapture is not null)
+        if (latestCapture is null) return row;
+        if (key == "superResolutionScale")
+        {
+            // Windows OCR is sensitive to the context around this small numeric
+            // badge. Use several padded row crops; accept only agreeing digits.
+            var readings = new List<UiRowValue>();
+            foreach (var fraction in new[] { 1d / 12, 1d / 7.2, 1d / 9 })
+            {
+                var height = row.Page.Height * fraction;
+                var region = new Box(row.Page.Width * .15625, Math.Max(0, row.Label.Bounds.CenterY - height / 2), row.Page.Width * .43, height);
+                var detail = await ocr.ReadRegionAsync(latestCapture, region, token, numericOnly: true);
+                var value = UiRows.ReadValue(detail, row.Label, Labels(key));
+                if (int.TryParse(value.Text.Trim().TrimEnd('%'), out var number) && number is >= 10 and <= 100)
+                    readings.Add(value);
+            }
+            var distinct = readings.Select(r => r.Text).Distinct().ToArray();
+            if (distinct.Length > 1) throw new InvalidOperationException("Render scale OCR is ambiguous; refusing to guess the setting.");
+            if (readings.Count >= 2) row = row with { Value = readings[0].Text, ValueX = readings[0].CenterX ?? row.ValueX };
+        }
+        else if (string.IsNullOrWhiteSpace(row.Value))
         {
             var height = Math.Max(40, row.Label.Bounds.Height * 2);
             var region = new Box(row.Page.Width * .16, Math.Max(0, row.Label.Bounds.CenterY - height / 2), row.Page.Width * .46, height);
-            var detail = await ocr.ReadRegionAsync(latestCapture, region, token, numericOnly: key == "superResolutionScale");
+            var detail = await ocr.ReadRegionAsync(latestCapture, region, token);
             var value = UiRows.ReadValue(detail, row.Label, Labels(key));
             if (!string.IsNullOrWhiteSpace(value.Text)) row = row with { Value = value.Text, ValueX = value.CenterX ?? row.ValueX };
         }
