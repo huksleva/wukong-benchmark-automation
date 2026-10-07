@@ -94,5 +94,11 @@ Test("report escapes application strings", () =>
     }
     finally { Directory.Delete(root, true); }
 });
+Test("startup continue prompt recognized", () =>
+    Equal(true, StartupScreen.NeedsContinue(new(1280, 720, [Line("Press any key to continue", 100, 600)]), new RunnerOptions().Labels["continue"])));
+Test("loading screen never receives continue input", () =>
+    Equal(false, StartupScreen.NeedsContinue(new(1280, 720, [Line("Compiling shaders 20%", 100, 600)]), new RunnerOptions().Labels["continue"])));
+Test("startup agreement is explicitly handed to the user", () =>
+    Equal(true, StartupScreen.NeedsManualAgreement(new(1280, 720, [Line("Privacy Agreement", 100, 100)]))));
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

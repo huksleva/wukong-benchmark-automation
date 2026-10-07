@@ -8,7 +8,7 @@ public sealed class RunnerOptions
     public string? InstallationDirectory { get; set; }
     public string? ConfigDirectory { get; set; }
     public string OutputDirectory { get; set; } = "results";
-    public int StartupTimeoutSeconds { get; set; } = 180;
+    public int StartupTimeoutSeconds { get; set; } = 900;
     public int BenchmarkTimeoutSeconds { get; set; } = 600;
     public int PollIntervalMilliseconds { get; set; } = 2000;
     public int MaxDiagnosticFrames { get; set; } = 40;
@@ -36,7 +36,7 @@ public sealed class RunnerOptions
         ["apply"] = ["apply settings", "apply"],
         ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test"],
         ["confirm"] = ["confirm", "yes", "keep changes"],
-        ["continue"] = ["press any key", "press any button", "press enter"]
+        ["continue"] = ["press any key", "press any button", "press enter", "press to continue", "click to continue", "click anywhere"]
     };
 
     public void Validate()

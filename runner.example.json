@@ -3,7 +3,7 @@
   "installationDirectory": null,
   "configDirectory": null,
   "outputDirectory": "results",
-  "startupTimeoutSeconds": 180,
+  "startupTimeoutSeconds": 900,
   "benchmarkTimeoutSeconds": 600,
   "pollIntervalMilliseconds": 2000,
   "maxDiagnosticFrames": 40,

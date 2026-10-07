@@ -41,7 +41,17 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             var page = await ObserveAsync("startup", token);
             if (Label(page, "settings") is not null || Label(page, "preset") is not null || Label(page, "start") is not null)
                 return;
-            if (Label(page, "continue") is not null && continues++ < 3) window.Key(NativeWindow.Enter);
+            if (StartupScreen.NeedsManualAgreement(page))
+                throw new InvalidOperationException("First launch requires your agreement in Benchmark Tool. Open it once, review the terms yourself, then close it and restart the runner.");
+            if (StartupScreen.NeedsContinue(page, Labels("continue")) && continues < 5)
+            {
+                var prompt = Label(page, "continue")!;
+                log("Startup: continue prompt detected; sending input to the benchmark window.");
+                if (continues++ < 2) window.Key(NativeWindow.Enter);
+                else window.Click(prompt.Bounds.CenterX, prompt.Bounds.CenterY);
+            }
+            if ((int)time.Elapsed.TotalSeconds % 30 < options.PollIntervalMilliseconds / 1000)
+                log($"Waiting for loading/shaders/main menu: {(int)time.Elapsed.TotalSeconds}s.");
         }
         throw new TimeoutException("Startup screen was not recognized. See startup screenshots (the UI must be English).");
     }

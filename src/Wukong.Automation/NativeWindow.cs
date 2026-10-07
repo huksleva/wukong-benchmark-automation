@@ -69,15 +69,17 @@ public sealed class NativeWindow(nint handle)
         var bounds = ClientBounds();
         if (x < 0 || y < 0 || x >= bounds.Width || y >= bounds.Height) throw new ArgumentOutOfRangeException(nameof(x));
         if (!SetCursorPos(bounds.X + (int)x, bounds.Y + (int)y)) throw new Win32Exception();
-        Send([new() { Type = 0, Data = new() { Mouse = new() { Flags = MouseLeftDown } } },
-              new() { Type = 0, Data = new() { Mouse = new() { Flags = MouseLeftUp } } }]);
+        Send([new() { Type = 0, Data = new() { Mouse = new() { Flags = MouseLeftDown } } }]);
+        try { Thread.Sleep(60); }
+        finally { Send([new() { Type = 0, Data = new() { Mouse = new() { Flags = MouseLeftUp } } }]); }
     }
 
     public void Key(ushort key)
     {
         Focus();
-        Send([new() { Type = InputKeyboard, Data = new() { Keyboard = new() { VirtualKey = key } } },
-              new() { Type = InputKeyboard, Data = new() { Keyboard = new() { VirtualKey = key, Flags = KeyUp } } }]);
+        Send([new() { Type = InputKeyboard, Data = new() { Keyboard = new() { VirtualKey = key } } }]);
+        try { Thread.Sleep(80); }
+        finally { Send([new() { Type = InputKeyboard, Data = new() { Keyboard = new() { VirtualKey = key, Flags = KeyUp } } }]); }
     }
 
     public void Scroll(int ticks)
