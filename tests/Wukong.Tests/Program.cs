@@ -228,5 +228,18 @@ Test("actual split graphics tab is recognized only in navigation column", () =>
     Equal(tab, UiTabs.Find(page, ["графика"]));
     Equal(null, UiTabs.Find(new(1920, 1080, [page.Lines[0]]), ["графика"]));
 });
+Test("actual Russian maximum preset and observed Off glyph read correctly", () =>
+{
+    Equal(UiValues.Normalize("Cinematic"), UiValues.Normalize("Реалистичн."));
+    Equal(UiValues.Normalize("Off"), UiValues.Normalize("Выюл."));
+});
+Test("zero minimum is valid for a nonzero completed summary", () =>
+    Equal(new BenchmarkMetrics(5, 0, 8), ResultParser.Parse(Inline("5", "0", "8"))));
+Test("agreeing OCR sources do not create a conflicting average", () =>
+{
+    var page = new OcrPage(1920, 1080, [Line("Average FPS", 200, 400), Line("28 FPS", 260, 350, 60),
+        Line("28 FPS", 261, 350, 60), Line("Minimum FPS 21", 600, 400), Line("Maximum FPS 32", 1000, 400)]);
+    Equal(28d, ResultParser.Parse(page).AverageFps);
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

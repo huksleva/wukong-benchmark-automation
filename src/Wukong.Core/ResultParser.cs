@@ -18,7 +18,7 @@ public static class ResultParser
     {
         var values = Required.Select(item => ReadMetric(page, item.Labels)
             ?? throw new InvalidDataException($"Cannot read {item.Name} FPS from the benchmark summary.")).ToArray();
-        if (values.Any(v => v <= 0 || v > 10000) || values[1] > values[0] || values[0] > values[2])
+        if (values.Any(v => v < 0 || v > 10000) || values[0] == 0 || values[2] == 0 || values[1] > values[0] || values[0] > values[2])
             throw new InvalidDataException("FPS values are inconsistent (expected minimum <= average <= maximum).");
         return new(values[0], values[1], values[2], ReadMetric(page, ["95%", "95 %", "5-й перцентиль", "5th percentile"], exclude95: true));
     }
@@ -52,7 +52,8 @@ public static class ResultParser
         if (candidates.Length > 1)
         {
             static double Distance(Box a, Box b) => Math.Abs(a.CenterY - b.CenterY) + Math.Abs(a.CenterX - b.CenterX) * .5;
-            if (Math.Abs(Distance(candidates[0].Bounds, bounds) - Distance(candidates[1].Bounds, bounds)) < 8)
+            if (candidates[0].Numbers[0] != candidates[1].Numbers[0]
+                && Math.Abs(Distance(candidates[0].Bounds, bounds) - Distance(candidates[1].Bounds, bounds)) < 8)
                 return null; // Ambiguous OCR must fail rather than silently invent a result.
         }
         return candidates[0].Numbers[0];

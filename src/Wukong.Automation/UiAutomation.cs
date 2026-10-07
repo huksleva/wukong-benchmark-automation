@@ -280,6 +280,15 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         if (choices.Length == 1 && int.TryParse(choices[0], out var target))
         {
             window.Click(row.ValueX, row.Label.Bounds.CenterY);
+            // 100 is the render-scale upper bound. Reach the bound first, then
+            // verify through OCR; avoid 75 full captures for individual increments.
+            if (key == "superResolutionScale" && target == 100)
+            {
+                for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Right); await Task.Delay(60, token); }
+                await Pause(token);
+                var maximum = await ReadRowAsync(key, token);
+                return Matches(maximum.Value, choices) ? new(Labels(key)[0], maximum.Value, "UI verified") : null;
+            }
             for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Left); await Task.Delay(12, token); }
             for (var i = 0; i < steps; i++)
             {
