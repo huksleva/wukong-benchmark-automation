@@ -185,5 +185,11 @@ Test("merged OCR label and value have distinct input target", () =>
     Equal("Off", value.Text);
     Equal<double?>(590d, value.CenterX);
 });
+Test("default and distributed runner configuration can actually launch", () =>
+{
+    new RunnerOptions().Validate();
+    var config = Path.Combine(AppContext.BaseDirectory, "runner.example.json");
+    RunnerOptions.Load(config).Validate();
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;
