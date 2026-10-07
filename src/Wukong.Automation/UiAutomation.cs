@@ -170,11 +170,20 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     private async Task ClickTabAsync(string key, CancellationToken token)
     {
         // Tab labels are matched exactly to avoid clicking a setting containing 'graphics'.
-        var page = await ObserveAsync(key, token);
-        var tab = page.Lines.FirstOrDefault(l => Labels(key).Any(s => Exact(l.Text, s)))
+        OcrLine? FindTab(OcrPage page) => page.Lines.FirstOrDefault(l => Labels(key).Any(s => Exact(l.Text, s)))
             ?? page.Lines.SelectMany(l => l.Words).Where(w => Labels(key).Any(s => Exact(w.Text, s)))
-                .Select(w => new OcrLine(w.Text, [w])).FirstOrDefault()
-            ?? throw new InvalidOperationException($"Cannot find {key} tab.");
+                .Select(w => new OcrLine(w.Text, [w])).FirstOrDefault();
+        var page = await ObserveAsync(key, token);
+        var tab = FindTab(page);
+        if (tab is null)
+        {
+            // Opening a category hides the category list in this benchmark build.
+            // Return from the current panel before choosing the next category.
+            window.Key(NativeWindow.Escape);
+            await Pause(token);
+            tab = FindTab(await ObserveAsync(key + "-categories", token));
+        }
+        if (tab is null) throw new InvalidOperationException($"Cannot find {key} tab.");
         window.Click(tab.Bounds.CenterX, tab.Bounds.CenterY);
         await Pause(token);
         window.Scroll(20);
@@ -275,18 +284,20 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     public async Task<(BenchmarkMetrics Metrics, string Screenshot, string Ocr)> RunBenchmarkAsync(CancellationToken token)
     {
         var page = await ObserveAsync("before-start", token);
-        var inSettings = page.Lines.Any(line => Labels("displayTab").Concat(Labels("graphicsTab")).Any(label => Exact(line.Text, label)))
-            || page.Lines.SelectMany(line => line.Words).Any(word => Labels("displayTab").Concat(Labels("graphicsTab")).Any(label => Exact(word.Text, label)));
-        if (!inSettings && Label(page, "start") is { } start)
-            window.Click(start.Bounds.CenterX, start.Bounds.CenterY);
-        else
+        bool InSettings(OcrPage observed) => observed.Lines.SelectMany(line => line.Words).Any(word =>
+            Labels("displayTab").Concat(Labels("graphicsTab")).Any(label => Exact(word.Text, label)))
+            || Label(observed, "preset") is not null;
+        // Escape leaves a category, then the settings list. Do not click the
+        // similarly named Benchmark category while still inside Settings.
+        for (var attempt = 0; attempt < 3 && (InSettings(page) || Label(page, "settings") is null); attempt++)
         {
             window.Key(NativeWindow.Escape);
             await Pause(token);
             page = await ObserveAsync("main-menu", token);
-            var button = Label(page, "start") ?? throw new InvalidOperationException("Cannot find Run/Start Benchmark.");
-            window.Click(button.Bounds.CenterX, button.Bounds.CenterY);
         }
+        if (InSettings(page)) throw new InvalidOperationException("Could not return from Settings to the main menu.");
+        var start = Label(page, "start") ?? throw new InvalidOperationException("Cannot find Run/Start Benchmark on the main menu.");
+        window.Click(start.Bounds.CenterX, start.Bounds.CenterY);
         await Pause(token);
         page = await ObserveAsync("start-confirmation", token);
         if (Confirmation(page) is { } confirmation)
