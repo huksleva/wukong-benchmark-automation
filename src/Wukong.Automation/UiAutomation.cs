@@ -187,26 +187,15 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
                 .Select(w => new OcrLine(w.Text, [w])).FirstOrDefault();
         var page = await ObserveAsync(key, token);
         var tab = FindTab(page);
-        if (tab is null)
+        for (var attempt = 0; tab is null && attempt < 4; attempt++)
         {
-            // Opening a category hides the category list in this benchmark build.
-            // Return from the current panel before choosing the next category.
-            window.Key(NativeWindow.Escape);
-            await Pause(token);
-            page = await ObserveAsync(key + "-categories", token);
+            // A pending apply dialog is another navigation layer. Confirm it
+            // before leaving the panel; never discard the requested profile.
             if (Confirmation(page) is { } pending)
-            {
                 window.Click(pending.Bounds.CenterX, pending.Bounds.CenterY);
-                await Pause(token);
-                page = await ObserveAsync(key + "-applied", token);
-                tab = FindTab(page);
-                if (tab is null)
-                {
-                    window.Key(NativeWindow.Escape);
-                    await Pause(token);
-                    page = await ObserveAsync(key + "-categories-after-apply", token);
-                }
-            }
+            else window.Key(NativeWindow.Escape);
+            await Pause(token);
+            page = await ObserveAsync(key + "-navigation", token);
             tab = FindTab(page);
         }
         if (tab is null) throw new InvalidOperationException($"Cannot find {key} tab.");
