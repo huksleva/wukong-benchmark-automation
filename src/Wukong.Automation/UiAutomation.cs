@@ -69,7 +69,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             if ((int)time.Elapsed.TotalSeconds % 30 < options.PollIntervalMilliseconds / 1000)
                 log($"Waiting for loading/shaders/main menu: {(int)time.Elapsed.TotalSeconds}s.");
         }
-        throw new TimeoutException("Startup screen was not recognized. See startup screenshots (the UI must be English).");
+        throw new TimeoutException("Startup screen was not recognized. See startup screenshots; English and Russian menus are supported.");
     }
 
     public async Task<(List<SettingEvidence> Settings, List<string> Warnings)> ApplyProfileAsync(BenchmarkProfile profile, CancellationToken token)
@@ -193,7 +193,21 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             // Return from the current panel before choosing the next category.
             window.Key(NativeWindow.Escape);
             await Pause(token);
-            tab = FindTab(await ObserveAsync(key + "-categories", token));
+            page = await ObserveAsync(key + "-categories", token);
+            if (Confirmation(page) is { } pending)
+            {
+                window.Click(pending.Bounds.CenterX, pending.Bounds.CenterY);
+                await Pause(token);
+                page = await ObserveAsync(key + "-applied", token);
+                tab = FindTab(page);
+                if (tab is null)
+                {
+                    window.Key(NativeWindow.Escape);
+                    await Pause(token);
+                    page = await ObserveAsync(key + "-categories-after-apply", token);
+                }
+            }
+            tab = FindTab(page);
         }
         if (tab is null) throw new InvalidOperationException($"Cannot find {key} tab.");
         window.Click(tab.Bounds.CenterX, tab.Bounds.CenterY);
@@ -296,7 +310,10 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         var page = await ObserveAsync("before-apply", token);
         if (Label(page, "apply") is { } apply)
         {
-            window.Click(apply.Bounds.CenterX, apply.Bounds.CenterY);
+            // The bottom Apply caption is a keyboard hint, not a clickable button.
+            // Use the game's T command only after recognizing that hint.
+            if (apply.Bounds.CenterY > page.Height * .8) window.Key(0x54);
+            else window.Click(apply.Bounds.CenterX, apply.Bounds.CenterY);
             await Pause(token);
             var confirmation = await ObserveAsync("after-apply", token);
             if (Confirmation(confirmation) is { } confirm)
