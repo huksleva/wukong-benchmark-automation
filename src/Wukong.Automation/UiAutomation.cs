@@ -39,6 +39,10 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)))
         ?? (key is "start" or "continue" or "settings" or "confirm" or "apply" ? page.Find(Labels(key)) : null);
 
+    private OcrLine? Confirmation(OcrPage page) => page.Lines.FirstOrDefault(line =>
+        line.Bounds.CenterY < page.Height * .8 && line.Bounds.CenterX > page.Width * .2
+        && Labels("confirm").Any(label => Exact(line.Text, label)));
+
     public async Task WaitForMenuAsync(CancellationToken token)
     {
         var time = Stopwatch.StartNew();
@@ -249,7 +253,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
                 await Pause(token);
                 var page = await ObserveAsync(key + "-change", token);
                 // RT toggles may display a known restart/confirmation dialog.
-                if (Label(page, "confirm") is { } confirm)
+                if (Confirmation(page) is { } confirm)
                 {
                     window.Click(confirm.Bounds.CenterX, confirm.Bounds.CenterY);
                     await Pause(token);
@@ -274,7 +278,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             window.Click(apply.Bounds.CenterX, apply.Bounds.CenterY);
             await Pause(token);
             var confirmation = await ObserveAsync("after-apply", token);
-            if (Label(confirmation, "confirm") is { } confirm)
+            if (Confirmation(confirmation) is { } confirm)
             { window.Click(confirm.Bounds.CenterX, confirm.Bounds.CenterY); await Pause(token); }
         }
     }
@@ -282,7 +286,9 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     public async Task<(BenchmarkMetrics Metrics, string Screenshot, string Ocr)> RunBenchmarkAsync(CancellationToken token)
     {
         var page = await ObserveAsync("before-start", token);
-        if (Label(page, "start") is { } start)
+        var inSettings = page.Lines.Any(line => Labels("displayTab").Concat(Labels("graphicsTab")).Any(label => Exact(line.Text, label)))
+            || page.Lines.SelectMany(line => line.Words).Any(word => Labels("displayTab").Concat(Labels("graphicsTab")).Any(label => Exact(word.Text, label)));
+        if (!inSettings && Label(page, "start") is { } start)
             window.Click(start.Bounds.CenterX, start.Bounds.CenterY);
         else
         {
@@ -294,7 +300,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         }
         await Pause(token);
         page = await ObserveAsync("start-confirmation", token);
-        if (Label(page, "confirm") is { } confirmation)
+        if (Confirmation(page) is { } confirmation)
             window.Click(confirmation.Bounds.CenterX, confirmation.Bounds.CenterY);
         var time = Stopwatch.StartNew();
         var leftMenu = false;
