@@ -20,12 +20,13 @@
   <a href="#демонстрация">Демонстрация</a> ·
   <a href="docs/USAGE.md">Руководство</a> ·
   <a href="docs/PROFILES.md">Методика</a> ·
+  <a href="#github-actions">GitHub Actions</a> ·
   <a href="docs/VALIDATION.md">Статус проверки</a>
 </p>
 
 Утилита на C# запускает **Black Myth: Wukong Benchmark Tool** из Steam с CPU- и GPU-профилями, распознаёт итоговый экран через **Windows OCR** и сохраняет FPS, оборудование и настройки в **HTML и JSON**.
 
-> **Статус: проверка интеграции.** Сборка и 13 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
+> **Статус: проверка интеграции.** Сборка и 16 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
 
 ## Возможности
 
@@ -95,7 +96,26 @@ dotnet run --project tests/Wukong.Tests -c Release
 dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release --self-contained false -o artifacts/runner
 ```
 
-GitHub Actions собирает Windows-версию, выполняет проверки и сохраняет архив `wukong-runner-windows`. CI не запускает Steam. Для опубликованной сборки нужен .NET 8 Desktop Runtime.
+## GitHub Actions
+
+[**Build and checks**](https://github.com/huksleva/wukong-benchmark-automation/actions/workflows/build.yml) — автоматическая проверка проекта. Она запускается при каждом push и открытии или обновлении pull request. Значок вверху README показывает состояние этой проверки для `main`.
+
+На отдельной машине GitHub с Windows workflow:
+
+1. Получает исходники и устанавливает .NET 8 SDK.
+2. Собирает приложение в режиме Release.
+3. Запускает автоматические проверки парсера FPS, INI, отчётов, конфигурации и распознавания стартовых экранов.
+4. Публикует приложение и сохраняет его в артефакт **`wukong-runner-windows`**.
+
+Чтобы скачать сборку, откройте **Actions → Build and checks → успешный запуск для нужного коммита → Artifacts → wukong-runner-windows**. Для скачивания артефактов войдите в GitHub. Распакуйте ZIP полностью; для этой сборки нужен [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0). Затем из распакованной папки можно выполнить:
+
+```powershell
+.\Wukong.Automation.exe doctor
+.\Wukong.Automation.exe run
+```
+
+Зелёный статус означает, что сборка и автоматические проверки прошли. **Actions не запускает Steam или Benchmark Tool и не измеряет FPS.** Проверка двух настоящих проходов выполняется локально и описана в [статусе проверки](docs/VALIDATION.md). Workflow находится в [.github/workflows/build.yml](.github/workflows/build.yml).
+
 
 | Документ | Содержание |
 |---|---|
