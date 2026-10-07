@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Приватное сообщение об уязвимости
+    url: https://github.com/huksleva/wukong-benchmark-automation/security/advisories/new
+    about: Чувствительные детали не публикуйте в Issues.

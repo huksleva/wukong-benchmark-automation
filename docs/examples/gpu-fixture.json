@@ -1,0 +1,79 @@
+{
+  "width": 1200,
+  "height": 240,
+  "lines": [
+    {
+      "text": "Average FPS 40",
+      "words": [
+        {
+          "text": "Average FPS 40",
+          "bounds": {
+            "x": 50,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 190,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 50,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 190,
+        "centerY": 115
+      }
+    },
+    {
+      "text": "Minimum FPS 25",
+      "words": [
+        {
+          "text": "Minimum FPS 25",
+          "bounds": {
+            "x": 450,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 590,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 450,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 590,
+        "centerY": 115
+      }
+    },
+    {
+      "text": "Maximum FPS 62",
+      "words": [
+        {
+          "text": "Maximum FPS 62",
+          "bounds": {
+            "x": 850,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 990,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 850,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 990,
+        "centerY": 115
+      }
+    }
+  ],
+  "text": "Average FPS 40\r\nMinimum FPS 25\r\nMaximum FPS 62"
+}

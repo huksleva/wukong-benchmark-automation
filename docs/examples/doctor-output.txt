@@ -1,0 +1,21 @@
+Checking installation, OCR and hardware (does not launch the benchmark)...
+Steam: c:\program files (x86)\steam\steam.exe
+Benchmark: c:\program files (x86)\steam\steamapps\common\Black Myth Wukong Benchmark Tool
+Steam build: 15365379
+English Windows OCR: OK
+{
+  "os": "Microsoft Windows 10.0.19045",
+  "cpu": [
+    "AMD Ryzen 5 5560U with Radeon Graphics"
+  ],
+  "gpu": [
+    "AMD Radeon(TM) Graphics"
+  ],
+  "ramGiB": 15.4,
+  "driverVersions": [
+    "31.0.21925.1001"
+  ],
+  "logicalProcessors": 12,
+  "architecture": "X64",
+  "warnings": []
+}

@@ -1,0 +1,79 @@
+{
+  "width": 1200,
+  "height": 240,
+  "lines": [
+    {
+      "text": "Average FPS 72.5",
+      "words": [
+        {
+          "text": "Average FPS 72.5",
+          "bounds": {
+            "x": 50,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 190,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 50,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 190,
+        "centerY": 115
+      }
+    },
+    {
+      "text": "Minimum FPS 44",
+      "words": [
+        {
+          "text": "Minimum FPS 44",
+          "bounds": {
+            "x": 450,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 590,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 450,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 590,
+        "centerY": 115
+      }
+    },
+    {
+      "text": "Maximum FPS 98",
+      "words": [
+        {
+          "text": "Maximum FPS 98",
+          "bounds": {
+            "x": 850,
+            "y": 100,
+            "width": 280,
+            "height": 30,
+            "centerX": 990,
+            "centerY": 115
+          }
+        }
+      ],
+      "bounds": {
+        "x": 850,
+        "y": 100,
+        "width": 280,
+        "height": 30,
+        "centerX": 990,
+        "centerY": 115
+      }
+    }
+  ],
+  "text": "Average FPS 72.5\r\nMinimum FPS 44\r\nMaximum FPS 98"
+}

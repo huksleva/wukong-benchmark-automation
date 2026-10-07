@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">Wukong Benchmark Automation</title><desc id="desc">Two profiles. Local OCR. Structured results.</desc>
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101827"/><stop offset="1" stop-color="#182b43"/></linearGradient></defs>
+  <rect width="1200" height="300" rx="18" fill="url(#bg)"/>
+  <path d="M0 240H1200M0 180H1200M0 120H1200M720 0V300M840 0V300M960 0V300M1080 0V300" stroke="#aac8ed" stroke-opacity=".07"/>
+  <text x="62" y="70" fill="#93b4d7" font-family="Segoe UI,Arial,sans-serif" font-size="15" letter-spacing="3">LOCAL BENCHMARK AUTOMATION</text>
+  <text x="60" y="132" fill="#f3f7fc" font-family="Segoe UI,Arial,sans-serif" font-size="46" font-weight="700">Measure. Capture. Report.</text>
+  <text x="62" y="178" fill="#b7c9dd" font-family="Segoe UI,Arial,sans-serif" font-size="20">Black Myth: Wukong Benchmark Tool</text>
+  <rect x="62" y="220" width="70" height="31" rx="6" fill="#315681"/><text x="97" y="242" text-anchor="middle" fill="white" font-family="Segoe UI,Arial,sans-serif" font-size="15">C#</text>
+  <text x="154" y="242" fill="#a6c0df" font-family="Segoe UI,Arial,sans-serif" font-size="15">.NET 8 / Windows OCR / HTML + JSON</text>
+  <rect x="816" y="76" width="126" height="126" rx="18" fill="#1d334e" stroke="#588aca"/><text x="879" y="150" text-anchor="middle" fill="#9ec7ff" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="600">CPU</text>
+  <path d="M951 140H980" stroke="#acbfda" stroke-width="2"/><path d="m975 135 5 5-5 5" fill="none" stroke="#acbfda" stroke-width="2"/>
+  <rect x="992" y="76" width="126" height="126" rx="18" fill="#173d3b" stroke="#54baac"/><text x="1055" y="150" text-anchor="middle" fill="#90e0cb" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="600">GPU</text>
+  <text x="967" y="239" text-anchor="middle" fill="#a6c0df" font-family="Segoe UI,Arial,sans-serif" font-size="15">Two profiles · One report</text>
+</svg>

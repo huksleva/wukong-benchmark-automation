@@ -1,0 +1,103 @@
+{
+  "status": "demo",
+  "createdAt": "2026-10-07T00:00:00+03:00",
+  "machine": {
+    "os": "Windows (example)",
+    "cpu": [
+      "Sample CPU \u2014 synthetic"
+    ],
+    "gpu": [
+      "Sample GPU \u2014 synthetic"
+    ],
+    "ramGiB": 16,
+    "driverVersions": [
+      "Example driver"
+    ],
+    "logicalProcessors": 8,
+    "architecture": "X64",
+    "warnings": [
+      "Documentation preview; not a hardware measurement."
+    ]
+  },
+  "passes": [
+    {
+      "name": "CPU \u00B7 demo",
+      "startedAt": "2026-10-07T00:00:00+03:00",
+      "finishedAt": "2026-10-07T00:02:00+03:00",
+      "profileDescription": "Synthetic documentation example. Requested settings shown for illustration.",
+      "metrics": {
+        "averageFps": 72.5,
+        "minimumFps": 44,
+        "maximumFps": 98,
+        "fps95PercentAbove": null
+      },
+      "settings": [
+        {
+          "label": "Resolution",
+          "value": "1280 \u00D7 720",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Graphics preset",
+          "value": "Low / High view distance",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Super resolution",
+          "value": "TSR / 50%",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Frame generation / VSync / FPS cap",
+          "value": "Off",
+          "source": "Demo fixture"
+        }
+      ],
+      "resultScreenshot": "cpu-fixture.svg",
+      "rawOcr": "cpu-fixture.json",
+      "warnings": [
+        "Synthetic values; this pass was not executed in Benchmark Tool."
+      ]
+    },
+    {
+      "name": "GPU \u00B7 demo",
+      "startedAt": "2026-10-07T00:00:00+03:00",
+      "finishedAt": "2026-10-07T00:02:00+03:00",
+      "profileDescription": "Synthetic documentation example. Requested settings shown for illustration.",
+      "metrics": {
+        "averageFps": 40,
+        "minimumFps": 25,
+        "maximumFps": 62,
+        "fps95PercentAbove": null
+      },
+      "settings": [
+        {
+          "label": "Resolution",
+          "value": "1920 \u00D7 1080",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Graphics preset",
+          "value": "Cinematic",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Super resolution",
+          "value": "TSR / 100%",
+          "source": "Demo fixture"
+        },
+        {
+          "label": "Frame generation / VSync / FPS cap",
+          "value": "Off",
+          "source": "Demo fixture"
+        }
+      ],
+      "resultScreenshot": "gpu-fixture.svg",
+      "rawOcr": "gpu-fixture.json",
+      "warnings": [
+        "Synthetic values; this pass was not executed in Benchmark Tool."
+      ]
+    }
+  ],
+  "error": "DEMONSTRATION ONLY: synthetic OCR fixtures, not real benchmark runs."
+}
