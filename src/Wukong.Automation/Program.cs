@@ -26,7 +26,7 @@ internal static class Program
             try { return ExecuteAsync(args, cancel.Token).GetAwaiter().GetResult(); }
             finally { mutex.ReleaseMutex(); }
         }
-        catch (OperationCanceledException) { Console.Error.WriteLine("Cancelled. See the partial report and backups."); return 130; }
+        catch (OperationCanceledException) { Console.Error.WriteLine("Cancelled."); return 130; }
         catch (Exception ex) { Console.Error.WriteLine("ERROR: " + ex.Message); return 1; }
         finally
         {

@@ -74,6 +74,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
 
     public async Task<(List<SettingEvidence> Settings, List<string> Warnings)> ApplyProfileAsync(BenchmarkProfile profile, CancellationToken token)
     {
+        log($"Configuring {profile.Name} profile in Benchmark Tool...");
         var settings = new List<SettingEvidence>();
         var warnings = new List<string>();
         if (profile.Name == "CPU") warnings.Add("CPU-biased settings do not prove a CPU bottleneck. GPU utilization is not measured; a weak GPU can still limit this pass.");
@@ -138,6 +139,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             else settings.Add(await SetChoiceAsync("rayTracing", ["Off"], token));
         }
         await ApplyAsync(token);
+        log("Graphics applied; checking final settings...");
         // A preset or RT switch can override another choice. Check the final state
         // after Apply rather than accepting each intermediate selection as effective.
         await ClickTabAsync("displayTab", token);
@@ -315,9 +317,13 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         return null;
     }
 
-    private async Task<SettingEvidence> SetChoiceAsync(string key, string[] choices, CancellationToken token, int steps = 12) =>
-        await TrySetChoiceAsync(key, choices, token, steps)
-        ?? throw new InvalidOperationException($"Cannot set '{key}' to {string.Join(" / ", choices)}. See OCR evidence.");
+    private async Task<SettingEvidence> SetChoiceAsync(string key, string[] choices, CancellationToken token, int steps = 12)
+    {
+        var evidence = await TrySetChoiceAsync(key, choices, token, steps)
+            ?? throw new InvalidOperationException($"Cannot set '{key}' to {string.Join(" / ", choices)}. See OCR evidence.");
+        log($"Setting verified: {evidence.Label} = {evidence.Value}.");
+        return evidence;
+    }
 
     private async Task ApplyAsync(CancellationToken token)
     {
@@ -356,6 +362,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         page = await ObserveAsync("start-confirmation", token);
         if (Confirmation(page) is { } confirmation)
             window.Click(confirmation.Bounds.CenterX, confirmation.Bounds.CenterY);
+        log("Benchmark requested; waiting for its built-in result screen...");
         var time = Stopwatch.StartNew();
         var leftMenu = false;
         BenchmarkMetrics? previous = null;
