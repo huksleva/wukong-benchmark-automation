@@ -1,0 +1,2 @@
+# Keep original benchmark artifacts byte-for-byte; provenance uses SHA-256.
+docs/results/** -text
