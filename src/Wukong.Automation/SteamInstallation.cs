@@ -16,8 +16,14 @@ public sealed record SteamInstallation(string SteamExe, string GameDirectory, st
             steamExe = key?.GetValue("SteamExe") as string;
             steamExe ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steam.exe");
         }
+        return DiscoverFromSteamPath(options, steamExe);
+    }
+
+    // A supplied path keeps discovery testable without depending on the host registry.
+    public static SteamInstallation DiscoverFromSteamPath(RunnerOptions options, string steamExe)
+    {
         if (Directory.Exists(steamExe)) steamExe = Path.Combine(steamExe, "steam.exe");
-        if (!File.Exists(steamExe)) throw new FileNotFoundException("Steam was not found. Set steamPath in runner.local.json.", steamExe);
+        if (!File.Exists(steamExe)) throw new InstallationIssue(InstallationProblem.MissingSteam, "Steam is not installed or its executable is unavailable. Install Steam from https://store.steampowered.com/about/, sign in, then retry. No game settings were changed.");
         steamExe = Path.GetFullPath(steamExe);
         var libraries = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Path.GetDirectoryName(steamExe)! };
         var folders = Path.Combine(libraries.First(), "steamapps", "libraryfolders.vdf");
@@ -39,7 +45,7 @@ public sealed record SteamInstallation(string SteamExe, string GameDirectory, st
             VerifyDirectory(explicitPath);
             return new(steamExe, Path.GetFullPath(explicitPath), null);
         }
-        throw new FileNotFoundException("Install the FREE Black Myth: Wukong Benchmark Tool in Steam (AppID 3132990). The full game is not required.");
+        throw new InstallationIssue(InstallationProblem.MissingBenchmark, "Install the FREE Black Myth: Wukong Benchmark Tool in Steam (AppID 3132990), and wait until its download finishes. The full game is not required. No game settings were changed.");
     }
 
     private static string? Field(string vdf, string name)
@@ -50,8 +56,8 @@ public sealed record SteamInstallation(string SteamExe, string GameDirectory, st
 
     private static void VerifyDirectory(string path)
     {
-        if (!Directory.Exists(Path.Combine(path, "b1")) || !File.Exists(Path.Combine(path, "b1_benchmark.exe")))
-            throw new DirectoryNotFoundException($"Not a Benchmark Tool installation: {path} (expected b1_benchmark.exe and b1/).");
+        if (!Directory.Exists(Path.Combine(path, "b1")) || !File.Exists(Path.Combine(path, "b1_benchmark.exe")) || !File.Exists(Path.Combine(path, "b1", "Binaries", "Win64", "b1-Win64-Shipping.exe")))
+            throw new InstallationIssue(InstallationProblem.IncompleteBenchmark, $"Benchmark Tool installation is incomplete: {path}. Wait for Steam to finish downloading; if it has finished, use Properties > Installed Files > Verify integrity. No game settings were changed.");
     }
 
     public List<Process> GameProcesses()

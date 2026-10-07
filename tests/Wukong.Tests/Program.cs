@@ -100,5 +100,50 @@ Test("loading screen never receives continue input", () =>
     Equal(false, StartupScreen.NeedsContinue(new(1280, 720, [Line("Compiling shaders 20%", 100, 600)]), new RunnerOptions().Labels["continue"])));
 Test("startup agreement is explicitly handed to the user", () =>
     Equal(true, StartupScreen.NeedsManualAgreement(new(1280, 720, [Line("Privacy Agreement", 100, 100)]))));
+Test("missing Steam gives an installation step", () =>
+{
+    try { SteamInstallation.DiscoverFromSteamPath(new(), Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".exe")); }
+    catch (InstallationIssue issue) { Equal(InstallationProblem.MissingSteam, issue.Problem); return; }
+    throw new Exception("Expected missing Steam.");
+});
+Test("Steam without benchmark distinguishes missing and partial installs", () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), "wukong-steam-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+        var steam = Path.Combine(root, "steam.exe"); File.WriteAllBytes(steam, []);
+        InstallationProblem? missing = null;
+        try { SteamInstallation.DiscoverFromSteamPath(new(), steam); }
+        catch (InstallationIssue issue) { missing = issue.Problem; }
+        Equal<InstallationProblem?>(InstallationProblem.MissingBenchmark, missing);
+        var app = Path.Combine(root, "game"); Directory.CreateDirectory(Path.Combine(app, "b1"));
+        File.WriteAllBytes(Path.Combine(app, "b1_benchmark.exe"), []);
+        try { SteamInstallation.DiscoverFromSteamPath(new() { InstallationDirectory = app }, steam); }
+        catch (InstallationIssue issue) { Equal(InstallationProblem.IncompleteBenchmark, issue.Problem); return; }
+        throw new Exception("Expected partial download to fail before launch.");
+    }
+    finally { Directory.Delete(root, true); }
+});
+Test("Steam libraries resolve complete benchmark installation", () =>
+{
+    var root = Path.Combine(Path.GetTempPath(), "wukong-library-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        Directory.CreateDirectory(Path.Combine(root, "steamapps"));
+        var steam = Path.Combine(root, "steam.exe"); File.WriteAllBytes(steam, []);
+        var library = Path.Combine(root, "Library");
+        var app = Path.Combine(library, "steamapps", "common", "Benchmark");
+        Directory.CreateDirectory(Path.Combine(app, "b1", "Binaries", "Win64"));
+        File.WriteAllBytes(Path.Combine(app, "b1_benchmark.exe"), []);
+        File.WriteAllBytes(Path.Combine(app, "b1", "Binaries", "Win64", "b1-Win64-Shipping.exe"), []);
+        File.WriteAllText(Path.Combine(root, "steamapps", "libraryfolders.vdf"), "\"path\" \"" + library.Replace("\\", "\\\\") + "\"");
+        File.WriteAllText(Path.Combine(library, "steamapps", "appmanifest_3132990.acf"), "\"installdir\" \"Benchmark\"\n\"buildid\" \"123\"");
+        var installed = SteamInstallation.DiscoverFromSteamPath(new(), steam);
+        Equal(Path.GetFullPath(app), installed.GameDirectory);
+        Equal("123", installed.BuildId);
+    }
+    finally { Directory.Delete(root, true); }
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

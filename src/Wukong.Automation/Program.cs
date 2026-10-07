@@ -10,13 +10,15 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        var launchedWithoutArguments = args.Length == 0 && !Console.IsInputRedirected;
+        if (args.Length == 0) args = ["start"];
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         NativeWindow.EnableDpiAwareness();
         using var cancel = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancel.Cancel(); };
         try
         {
-            if (args.Length == 0 || args[0] is "help" or "--help" or "-h") { Help(); return 0; }
+            if (args[0] is "help" or "--help" or "-h") { Help(); return 0; }
             using var mutex = new Mutex(false, @"Local\WukongBenchmarkAutomation3132990");
             bool acquired;
             try { acquired = mutex.WaitOne(0); } catch (AbandonedMutexException) { acquired = true; }
@@ -26,6 +28,14 @@ internal static class Program
         }
         catch (OperationCanceledException) { Console.Error.WriteLine("Cancelled. See the partial report and backups."); return 130; }
         catch (Exception ex) { Console.Error.WriteLine("ERROR: " + ex.Message); return 1; }
+        finally
+        {
+            if (launchedWithoutArguments)
+            {
+                Console.WriteLine("Press Enter to close this window.");
+                Console.ReadLine();
+            }
+        }
     }
 
     private static async Task<int> ExecuteAsync(string[] args, CancellationToken token)
@@ -53,7 +63,17 @@ internal static class Program
         }
         var options = RunnerOptions.Load(Value("--config"));
         if (command == "doctor") return await DoctorAsync(options, token);
-        if (command != "run") throw new ArgumentException($"Unknown command: {command}");
+        if (command == "start")
+        {
+            var installation = GuidedSetup.EnsureInstalled(options, token);
+            GuidedSetup.WaitForBenchmarkToClose(installation, token);
+            if (await DoctorAsync(options, token) != 0)
+            {
+                Console.Error.WriteLine("Setup checks failed; the benchmark has not been launched and settings were not changed. See the messages above and docs/USAGE.md.");
+                return 1;
+            }
+        }
+        else if (command != "run") throw new ArgumentException($"Unknown command: {command}");
         return await RunAsync(options, token);
     }
 
@@ -168,6 +188,12 @@ internal static class Program
             ReportWriter.Write(output, new(status, started, machine, reports, error));
         }
         Log($"{status}. {Path.Combine(output, "report.html")}");
+        if (status == "completed")
+        {
+            try { using var browser = Process.Start(new ProcessStartInfo(Path.Combine(output, "report.html")) { UseShellExecute = true }); }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+            { Log("Open report.html manually: " + ex.Message); }
+        }
         if (status == "cancelled") return 130;
         return status == "completed" ? 0 : 1;
     }
@@ -241,6 +267,7 @@ internal static class Program
     private static void Help() => Console.WriteLine("""
         Wukong Benchmark Automation (Windows 10/11, Steam AppID 3132990)
         Commands:
+          start  [--config runner.local.json]   Guided setup checks, then both profiles (default).
           doctor [--config runner.local.json]   Check installation, OCR, CPU/GPU/RAM.
           run    [--config runner.local.json]   Run CPU and GPU profiles automatically.
           parse  --image result.png             Parse an existing English result image.

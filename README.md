@@ -26,7 +26,7 @@
 
 Утилита на C# запускает **Black Myth: Wukong Benchmark Tool** из Steam с CPU- и GPU-профилями, распознаёт итоговый экран через **Windows OCR** и сохраняет FPS, оборудование и настройки в **HTML и JSON**.
 
-> **Статус: проверка интеграции.** Сборка и 16 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
+> **Статус: проверка интеграции.** Сборка и 19 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
 
 ## Возможности
 
@@ -56,14 +56,14 @@
 git clone https://github.com/huksleva/wukong-benchmark-automation.git
 cd wukong-benchmark-automation
 dotnet build src/Wukong.Automation/Wukong.Automation.csproj -c Release
-dotnet run --project src/Wukong.Automation -c Release -- doctor
-dotnet run --project src/Wukong.Automation -c Release -- run
+dotnet run --project src/Wukong.Automation -c Release -- start
 ```
 
 Перед `run` закройте Benchmark Tool и диалоги Steam. Во время проходов оставьте окно видимым и не используйте мышь/клавиатуру. При первом ручном запуске дождитесь компиляции шейдеров и пройдите первоначальные диалоги. `Ctrl+C` отменяет сценарий с попыткой восстановления INI.
 
 | Команда | Назначение |
 |---|---|
+| `start` / запуск EXE без аргументов | Проверить готовность, помочь с установкой и выполнить оба профиля |
 | `doctor` | Проверить установку, английский OCR и CPU/GPU/RAM |
 | `run` | Выполнить оба профиля и записать отчёт |
 | `parse --image result.png` | Разобрать сохранённое изображение результата |
