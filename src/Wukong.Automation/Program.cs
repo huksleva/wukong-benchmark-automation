@@ -98,9 +98,11 @@ internal static class Program
                 g.DrawString("Average FPS 123", font, Brushes.Black, 20, 50);
                 image.Save(scratch, ImageFormat.Png);
             }
-            var page = await new WindowsOcr().ReadAsync(scratch, token);
+            var ocr = new WindowsOcr();
+            var page = await ocr.ReadAsync(scratch, token);
             if (!page.Text.Contains("123", StringComparison.Ordinal)) throw new InvalidOperationException("OCR smoke test failed.");
             Console.WriteLine("English Windows OCR: OK");
+            Console.WriteLine("Russian Windows OCR: " + (ocr.SupportsRussian ? "available (automatic UI recognition)" : "not installed; select English in Benchmark Tool"));
         }
         catch (Exception ex) when (ex is not OperationCanceledException) { Console.Error.WriteLine("OCR: " + ex.Message); errors++; }
         finally { if (File.Exists(scratch)) File.Delete(scratch); }

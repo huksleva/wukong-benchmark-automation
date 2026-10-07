@@ -21,8 +21,8 @@ public sealed record OcrLine(string Text, OcrWord[] Words)
 public sealed record OcrPage(int Width, int Height, OcrLine[] Lines)
 {
     public string Text => string.Join(Environment.NewLine, Lines.Select(l => l.Text));
-    public static string Normalize(string text) => Regex.Replace(text.ToLowerInvariant(), @"[^a-z0-9%]+", " ").Trim();
-    public OcrLine? Find(params string[] labels) => Lines.FirstOrDefault(l => labels.Any(s =>
+    public static string Normalize(string text) => Regex.Replace(text.ToLowerInvariant(), @"[^\p{L}\p{Nd}%]+", " ").Trim();
+    public OcrLine? Find(params string[] labels) => Lines.FirstOrDefault(l => labels.Any(s => !string.IsNullOrWhiteSpace(s) &&
         Normalize(l.Text).Contains(Normalize(s), StringComparison.Ordinal)));
 }
 

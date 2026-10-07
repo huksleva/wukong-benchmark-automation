@@ -13,7 +13,13 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     {
         var slot = captureIndex++ % options.MaxDiagnosticFrames;
         var path = Path.Combine(directory, $"diagnostic-{slot:0000}.png");
-        window.Capture(path);
+        for (var attempt = 0; ; attempt++)
+        {
+            token.ThrowIfCancellationRequested();
+            try { window.Capture(path); break; }
+            catch (InvalidOperationException ex) when (attempt < 3 && ex.Message.StartsWith("Cannot focus", StringComparison.Ordinal))
+            { log("Waiting for access to the benchmark window..."); await Task.Delay(2000, token); }
+        }
         latestCapture = path;
         var page = await ocr.ReadAsync(path, token);
         File.WriteAllText(Path.ChangeExtension(path, ".json"), JsonSerializer.Serialize(new
@@ -25,9 +31,11 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     private string[] Labels(string key) => options.Labels[key];
     private static bool Exact(string a, string b) => OcrPage.Normalize(a) == OcrPage.Normalize(b);
     private OcrLine? Label(OcrPage page, string key) => page.Lines.FirstOrDefault(l =>
-        !(key == "superResolutionScale" && OcrPage.Normalize(l.Text).Contains("sampling", StringComparison.Ordinal))
+        !(key == "superResolutionScale" && new[] { "sampling", "сэмплинг", "технология", "выборка" }.Any(word => OcrPage.Normalize(l.Text).Contains(word, StringComparison.Ordinal)))
         && !(key == "rayTracing" && (OcrPage.Normalize(l.Text).Contains("level", StringComparison.Ordinal)
-            || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)))
+            || OcrPage.Normalize(l.Text).Contains("quality", StringComparison.Ordinal)
+            || OcrPage.Normalize(l.Text).Contains("уровень", StringComparison.Ordinal)
+            || OcrPage.Normalize(l.Text).Contains("качество", StringComparison.Ordinal)))
         && Labels(key).Any(s => Exact(l.Text, s) || OcrPage.Normalize(l.Text).StartsWith(OcrPage.Normalize(s) + " ", StringComparison.Ordinal)))
         ?? (key is "start" or "continue" or "settings" or "confirm" or "apply" ? page.Find(Labels(key)) : null);
 
@@ -73,7 +81,12 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         var digits = new string(resolution.Value.Where(char.IsDigit).ToArray());
         var requested = $"{profile.Width}{profile.Height}";
         if (!digits.Contains(requested, StringComparison.Ordinal))
-            throw new InvalidOperationException($"Requested {profile.Width}x{profile.Height}, but UI resolution is '{resolution.Value}'. Set the desired resolution once, or supply configDirectory pointing to the active INI directory.");
+        {
+            await SetChoiceAsync("resolution", [$"{profile.Width}x{profile.Height}"], token, steps: 24);
+            resolution = await ReadRowAsync("resolution", token);
+            if (!new string(resolution.Value.Where(char.IsDigit).ToArray()).Contains(requested, StringComparison.Ordinal))
+                throw new InvalidOperationException($"The benchmark did not offer the requested resolution {profile.Width}x{profile.Height}.");
+        }
         settings.Add(new("Display resolution", resolution.Value, "UI verified"));
         await ClickTabAsync("graphicsTab", token);
         settings.Add(await SetChoiceAsync("preset", [profile.Preset], token));
@@ -202,7 +215,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
     private async Task<Row> ReadRowAsync(string key, CancellationToken token) =>
         await FindRowAsync(key, token) ?? throw new InvalidOperationException(key);
 
-    private static bool Matches(string value, string[] choices) => choices.Any(c => Exact(value.Trim('<', '>', ' ', '%'), c));
+    private static bool Matches(string value, string[] choices) => choices.Any(c => UiValues.Normalize(value) == UiValues.Normalize(c));
     private async Task<SettingEvidence?> TrySetChoiceAsync(string key, string[] choices, CancellationToken token, int steps)
     {
         var row = await ReadRowAsync(key, token);

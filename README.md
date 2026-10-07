@@ -26,7 +26,7 @@
 
 Утилита на C# запускает **Black Myth: Wukong Benchmark Tool** из Steam с CPU- и GPU-профилями, распознаёт итоговый экран через **Windows OCR** и сохраняет FPS, оборудование и настройки в **HTML и JSON**.
 
-> **Статус: проверка интеграции.** Сборка и 19 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
+> **Статус: проверка интеграции.** Сборка и 22 автоматических проверок проходят; установленный Benchmark Tool, OCR и аппаратная диагностика проверены. Два полных автоматических прохода пока не подтверждены. [Подробности и критерии готовности →](docs/VALIDATION.md)
 
 ## Возможности
 
@@ -50,7 +50,7 @@
 
 ## Быстрый старт
 
-Нужны Windows 10/11, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0), Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Интерфейс бенчмарка и OCR Windows должны поддерживать English.
+Нужны Windows 10/11, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0), Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
 
 ```powershell
 git clone https://github.com/huksleva/wukong-benchmark-automation.git

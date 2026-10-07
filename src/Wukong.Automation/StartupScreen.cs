@@ -10,6 +10,6 @@ public static class StartupScreen
             OcrPage.Normalize(line.Text).Contains(OcrPage.Normalize(label), StringComparison.Ordinal)));
 
     public static bool NeedsManualAgreement(OcrPage page) =>
-        new[] { "privacy policy", "privacy agreement", "user agreement", "license agreement" }
+        new[] { "privacy policy", "privacy agreement", "user agreement", "license agreement", "политика конфиденциальности", "пользовательское соглашение", "лицензионное соглашение" }
             .Any(label => page.Find(label) is not null);
 }

@@ -145,5 +145,22 @@ Test("Steam libraries resolve complete benchmark installation", () =>
     }
     finally { Directory.Delete(root, true); }
 });
+Test("Russian continue prompt recognized without matching unrelated text", () =>
+{
+    Equal(true, StartupScreen.NeedsContinue(new(1280, 720, [Line("Нажмите любую клавишу, чтобы продолжить", 100, 600)]), new RunnerOptions().Labels["continue"]));
+    Equal(false, StartupScreen.NeedsContinue(new(1280, 720, [Line("Компиляция шейдеров", 100, 600)]), new RunnerOptions().Labels["continue"]));
+});
+Test("Russian FPS labels are preserved and parsed", () =>
+{
+    var page = new OcrPage(1280, 720, [Line("Средний FPS 30", 100, 400), Line("Минимальный FPS 20", 400, 400), Line("Максимальный FPS 50", 700, 400)]);
+    Equal(new BenchmarkMetrics(30, 20, 50), ResultParser.Parse(page));
+    Equal(null, page.Find(""));
+});
+Test("localized UI values and resolution separators compare correctly", () =>
+{
+    Equal(UiValues.Normalize("Off"), UiValues.Normalize("Выкл."));
+    Equal(UiValues.Normalize("High"), UiValues.Normalize("Высокое"));
+    Equal(UiValues.Normalize("1280x720"), UiValues.Normalize("1280 × 720"));
+});
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;

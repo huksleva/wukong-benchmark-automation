@@ -9,9 +9,9 @@ public static class ResultParser
     private static readonly Regex Number = new(@"(?<![\w.])\d{1,4}(?:[.,]\d{1,2})?(?![\w.])", RegexOptions.Compiled);
     private static readonly (string Name, string[] Labels)[] Required =
     [
-        ("average", ["average fps", "average frame rate", "average framerate"]),
-        ("minimum", ["minimum fps", "min fps", "minimum frame rate", "lowest fps"]),
-        ("maximum", ["maximum fps", "max fps", "maximum frame rate", "highest fps"])
+        ("average", ["average fps", "average frame rate", "average framerate", "средний fps", "средняя частота кадров"]),
+        ("minimum", ["minimum fps", "min fps", "minimum frame rate", "lowest fps", "минимальный fps", "минимальная частота кадров"]),
+        ("maximum", ["maximum fps", "max fps", "maximum frame rate", "highest fps", "максимальный fps", "максимальная частота кадров"])
     ];
 
     public static BenchmarkMetrics Parse(OcrPage page)

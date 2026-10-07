@@ -20,23 +20,23 @@ public sealed class RunnerOptions
     public bool EnableGpuRayTracing { get; set; } = true;
     public Dictionary<string, string[]> Labels { get; set; } = new()
     {
-        ["settings"] = ["settings"],
-        ["displayTab"] = ["display"],
-        ["graphicsTab"] = ["graphics"],
-        ["preset"] = ["graphics preset", "graphics quality", "overall graphics quality"],
-        ["viewDistance"] = ["view distance quality", "view distance"],
-        ["superResolutionMode"] = ["super resolution sampling"],
-        ["superResolutionScale"] = ["super resolution sharpness", "super resolution"],
-        ["frameGeneration"] = ["frame generation"],
-        ["rayTracing"] = ["full ray tracing"],
-        ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality"],
-        ["vsync"] = ["v sync", "vsync", "vertical sync"],
-        ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit"],
-        ["resolution"] = ["display resolution", "resolution"],
-        ["apply"] = ["apply settings", "apply"],
-        ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test"],
-        ["confirm"] = ["confirm", "yes", "keep changes"],
-        ["continue"] = ["press any key", "press any button", "press enter", "press to continue", "click to continue", "click anywhere"]
+        ["settings"] = ["settings", "настройки"],
+        ["displayTab"] = ["display", "экран", "дисплей"],
+        ["graphicsTab"] = ["graphics", "графика"],
+        ["preset"] = ["graphics preset", "graphics quality", "overall graphics quality", "общее качество графики", "качество графики", "предустановка графики", "общие настройки графики"],
+        ["viewDistance"] = ["view distance quality", "view distance", "дальность прорисовки", "качество дальности прорисовки", "расстояние обзора"],
+        ["superResolutionMode"] = ["super resolution sampling", "сэмплинг суперразрешения", "технология суперразрешения", "метод суперразрешения", "суперразрешение выборка"],
+        ["superResolutionScale"] = ["super resolution sharpness", "super resolution", "суперразрешение", "четкость суперразрешения"],
+        ["frameGeneration"] = ["frame generation", "генерация кадров", "создание кадров"],
+        ["rayTracing"] = ["full ray tracing", "полная трассировка лучей"],
+        ["rayTracingQuality"] = ["full ray tracing level", "ray tracing quality", "уровень полной трассировки лучей", "качество трассировки лучей"],
+        ["vsync"] = ["v sync", "vsync", "vertical sync", "вертикальная синхронизация", "верт синхронизация", "верт синхр"],
+        ["frameCap"] = ["frame rate cap", "framerate cap", "frame rate limit", "ограничение частоты кадров", "лимит частоты кадров", "ограничение кадров"],
+        ["resolution"] = ["display resolution", "resolution", "разрешение экрана", "разрешение"],
+        ["apply"] = ["apply settings", "apply", "применить настройки", "применить"],
+        ["start"] = ["start benchmark", "run benchmark", "begin benchmark", "benchmark test", "тест быстродействия", "начать тестирование", "запустить тестирование", "начать тест", "запустить тест"],
+        ["confirm"] = ["confirm", "yes", "keep changes", "подтвердить", "да", "сохранить изменения"],
+        ["continue"] = ["press any key", "press any button", "press enter", "press to continue", "click to continue", "click anywhere", "нажмите любую клавишу", "нажмите любую кнопку", "нажмите чтобы продолжить", "нажмите для продолжения"]
     };
 
     public void Validate()

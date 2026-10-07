@@ -11,6 +11,9 @@ public sealed class WindowsOcr
     private readonly OcrEngine engine = OcrEngine.TryCreateFromLanguage(new Language("en-US"))
         ?? throw new InvalidOperationException("Windows English OCR is not installed. Add English (United States) in Windows Settings > Language, including Basic typing.");
 
+    private readonly OcrEngine? russianEngine = OcrEngine.TryCreateFromLanguage(new Language("ru-RU"));
+    public bool SupportsRussian => russianEngine is not null;
+
     public async Task<OcrPage> ReadAsync(string path, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
@@ -25,6 +28,15 @@ public sealed class WindowsOcr
         using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, transform,
             ExifOrientationMode.IgnoreExifOrientation, ColorManagementMode.DoNotColorManage);
         var result = await engine.RecognizeAsync(bitmap);
+        if (russianEngine is not null)
+        {
+            var localized = await russianEngine.RecognizeAsync(bitmap);
+            // A saved Russian UI can override Unreal's command-line culture. Select
+            // its OCR page only when recognizable Russian interface text is present.
+            var text = OcrPage.Normalize(localized.Text);
+            if (new[] { "нажмите", "настройки", "быстродействия", "суперразрешение", "разрешение", "трассировка", "средний fps", "конфиденциальности" }
+                .Any(label => text.Contains(label, StringComparison.Ordinal))) result = localized;
+        }
         token.ThrowIfCancellationRequested();
         return new((int)decoder.PixelWidth, (int)decoder.PixelHeight, result.Lines.Select(l => new Wukong.Core.OcrLine(l.Text,
             l.Words.Select(w => new Wukong.Core.OcrWord(w.Text, new(w.BoundingRect.X / scale, w.BoundingRect.Y / scale,
