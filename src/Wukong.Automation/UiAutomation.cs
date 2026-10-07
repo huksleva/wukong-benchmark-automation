@@ -238,9 +238,9 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         // OCR can turn 50 into 5П even when the setting was applied correctly.
         if ((key == "superResolutionScale" || string.IsNullOrWhiteSpace(row.Value)) && latestCapture is not null)
         {
-            var height = Math.Max(24, row.Label.Bounds.Height * 2);
-            var region = new Box(row.Page.Width * .4, Math.Max(0, row.Label.Bounds.CenterY - height / 2), row.Page.Width * .22, height);
-            var detail = await ocr.ReadRegionAsync(latestCapture, region, token);
+            var height = Math.Max(40, row.Label.Bounds.Height * 2);
+            var region = new Box(row.Page.Width * .16, Math.Max(0, row.Label.Bounds.CenterY - height / 2), row.Page.Width * .46, height);
+            var detail = await ocr.ReadRegionAsync(latestCapture, region, token, numericOnly: key == "superResolutionScale");
             var value = UiRows.ReadValue(detail, row.Label, Labels(key));
             if (!string.IsNullOrWhiteSpace(value.Text)) row = row with { Value = value.Text, ValueX = value.CenterX ?? row.ValueX };
         }

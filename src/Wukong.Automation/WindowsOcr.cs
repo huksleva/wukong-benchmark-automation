@@ -15,7 +15,7 @@ public sealed class WindowsOcr
     private bool useRussian;
     public bool SupportsRussian => russianEngine is not null;
 
-    public async Task<OcrPage> ReadAsync(string path, CancellationToken token)
+    public async Task<OcrPage> ReadAsync(string path, CancellationToken token, bool numericOnly = false)
     {
         token.ThrowIfCancellationRequested();
         var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(path));
@@ -30,7 +30,7 @@ public sealed class WindowsOcr
         using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, transform,
             ExifOrientationMode.IgnoreExifOrientation, ColorManagementMode.DoNotColorManage);
         var result = await engine.RecognizeAsync(bitmap);
-        if (russianEngine is not null)
+        if (!numericOnly && russianEngine is not null)
         {
             var localized = await russianEngine.RecognizeAsync(bitmap);
             // A saved Russian UI can override Unreal's command-line culture. Select
@@ -45,7 +45,7 @@ public sealed class WindowsOcr
             l.Words.Select(w => new Wukong.Core.OcrWord(w.Text, new(w.BoundingRect.X / scale, w.BoundingRect.Y / scale,
                 w.BoundingRect.Width / scale, w.BoundingRect.Height / scale))).ToArray())).ToArray());
     }
-    public async Task<OcrPage> ReadRegionAsync(string path, Box region, CancellationToken token)
+    public async Task<OcrPage> ReadRegionAsync(string path, Box region, CancellationToken token, bool numericOnly = false)
     {
         using var source = new Bitmap(path);
         var bounds = Rectangle.Intersect(new((int)region.X, (int)region.Y, (int)region.Width, (int)region.Height), new(0, 0, source.Width, source.Height));
@@ -55,7 +55,7 @@ public sealed class WindowsOcr
         {
             using (var crop = source.Clone(bounds, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
                 crop.Save(temp, System.Drawing.Imaging.ImageFormat.Png);
-            var detail = await ReadAsync(temp, token);
+            var detail = await ReadAsync(temp, token, numericOnly);
             return new(source.Width, source.Height, detail.Lines.Select(line => new Wukong.Core.OcrLine(line.Text,
                 line.Words.Select(word => new Wukong.Core.OcrWord(word.Text, word.Bounds with { X = word.Bounds.X + bounds.X, Y = word.Bounds.Y + bounds.Y })).ToArray())).ToArray());
         }
