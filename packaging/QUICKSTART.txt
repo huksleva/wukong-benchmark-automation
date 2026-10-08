@@ -1,32 +1,43 @@
-Wukong Benchmark Automation — Windows 10/11 x64
+Wukong Benchmark Automation 0.1.0 — Windows 10/11 x64
 
-1. Extract the entire ZIP into a folder you can write to.
-2. Launch Wukong.Automation.exe (double-click).
-3. Follow the setup checks. Steam and the FREE Black Myth: Wukong Benchmark Tool
-   (AppID 3132990) are required; the full game is not required.
-4. Sign in to Steam and review first-launch agreements yourself.
-5. During the tests, keep the game window visible and do not use mouse/keyboard.
-6. A successful run opens results/<run>/report.html automatically.
+Download Wukong.Automation-win-x64.exe from GitHub Releases into a writable folder
+and double-click it. This is ONE self-contained EXE: no ZIP extraction, .NET SDK,
+Git or Visual Studio required. The first start extracts bundled dependencies into
+Windows' per-user temporary cache automatically.
 
-.NET is included in this build. You do not need to install .NET SDK, Git or Visual Studio.
-Windows OCR: English is required. Russian interface recognition additionally requires
-Russian Windows OCR. The doctor command checks availability.
+The setup wizard checks Steam, the FREE Black Myth: Wukong Benchmark Tool
+(AppID 3132990), Windows OCR and local Tesseract. The full game is not required.
+If Steam or the benchmark is missing, follow the installation prompt and retry.
+Sign in to Steam and review first-launch agreements yourself. Complete the initial
+shader compilation and first-launch dialogs once, then close the benchmark.
+During automated tests, keep the game visible and do not use mouse/keyboard.
+A successful run opens results/<run>/report.html and restores the original INI.
 
-Advanced commands from PowerShell in this folder:
-  .\Wukong.Automation.exe doctor
-  .\Wukong.Automation.exe start
-  .\Wukong.Automation.exe run
-  .\Wukong.Automation.exe --help
+Windows English OCR is required. Russian menus additionally require Russian OCR.
+Tesseract and its model are bundled; native libraries need Microsoft Visual C++
+Runtime x64 (2015–2022), normally installed by Steam. See the usage guide if a
+check fails. This EXE does not include Steam, the benchmark or Windows OCR.
+The EXE is not publisher-signed. Verify its source and SHA-256 before running.
 
-The integration status and instructions are available at:
-https://github.com/huksleva/wukong-benchmark-automation#readme
-A passing CI build does not certify real benchmark runs. See docs/VALIDATION.md.
-The file build-info.json identifies this build's source commit.
+PowerShell, in the EXE folder:
+  .\Wukong.Automation-win-x64.exe doctor
+  .\Wukong.Automation-win-x64.exe start
+  .\Wukong.Automation-win-x64.exe --help
+
+Linux/macOS: no automation executable. Existing HTML/JSON reports can be viewed
+on either platform; the current Windows OCR and Win32 implementation is required
+for running the tests. No Wine/Proton support is claimed.
+
+Usage: https://github.com/huksleva/wukong-benchmark-automation/blob/main/docs/USAGE.md
+Releases: https://github.com/huksleva/wukong-benchmark-automation/releases/latest
+build-info.json identifies the source commit; SHA256SUMS.txt lists asset hashes.
+CI checks do not certify real game runs. See docs/VALIDATION.md for actual results.
 
 Русский:
-Распакуйте ZIP полностью и запустите Wukong.Automation.exe двойным щелчком.
-.NET уже включён. Программа проверит установку Steam и бесплатного Benchmark Tool.
-Вход в аккаунт и принятие соглашений требуют вашего решения.
-После подготовки программа сама проходит подсказку продолжения, выбирает
-настройки и запускает два теста. Во время работы не используйте мышь/клавиатуру.
-Итоговый HTML-отчёт откроется автоматически после успешных проходов.
+Скачайте Wukong.Automation-win-x64.exe из Releases и запустите двойным щелчком.
+Это один файл; .NET и модель OCR включены. Мастер проверит Steam, бесплатный
+Benchmark Tool и OCR. При отсутствии Steam или теста предложит открыть установку.
+Вход в аккаунт, соглашения и первичная подготовка выполняются пользователем.
+Затем программа сама проходит подсказку продолжения, выбирает настройки и
+запускает оба теста. Не используйте мышь/клавиатуру во время проходов.
+После успешного завершения откроется настоящий HTML-отчёт.

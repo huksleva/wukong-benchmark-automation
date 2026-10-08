@@ -25,6 +25,11 @@
   <a href="docs/VALIDATION.md">Статус проверки</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe"><strong>⬇ Скачать для Windows x64 — один EXE</strong></a> ·
+  <a href="docs/PLATFORMS.md">Linux / macOS: поддержка платформ</a>
+</p>
+
 Утилита на C# запускает **Black Myth: Wukong Benchmark Tool** из Steam с CPU- и GPU-профилями, распознаёт итоговый экран через **Windows OCR** и локальный **Tesseract** для цифр и сохраняет FPS, оборудование и настройки в **HTML и JSON**.
 
 > **Проверено на настоящем Benchmark Tool:** два последовательных автоматических прохода, распознавание FPS и побайтовое восстановление INI. Проверка выполнена 8 октября 2026 года на Windows 10 с Ryzen 5 5560U и Radeon Graphics. [Результаты и границы проверки →](docs/VALIDATION.md)
@@ -71,9 +76,28 @@ HTML на GitHub доступен как исходный файл. Чтобы �
 
 Нужны Windows 10/11 **x64**, Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
 
-**Готовая сборка:** [скачайте ZIP из успешного запуска Actions](#github-actions), распакуйте его полностью в доступную для записи папку и запустите **`Wukong.Automation.exe` двойным щелчком**. .NET уже включён; SDK, Git и Visual Studio для этого не нужны. Откроется мастер `start`: он проверит готовность и подскажет установку недостающих компонентов. Вход в Steam и первоначальные соглашения требуют вашего решения.
+### Скачать и запустить
 
-**Из исходников:** установите [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) и Git, затем выполните:
+**[⬇ Скачать EXE для Windows x64](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe)** · [Все файлы релиза и SHA-256](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)
+
+1. Скачайте **`Wukong.Automation-win-x64.exe`** в папку, доступную для записи, и запустите двойным щелчком.
+2. Следуйте проверкам мастера `start`. Если Steam или бесплатный Benchmark Tool отсутствует, мастер предложит открыть установку. Вход в Steam и первоначальные соглашения требуют вашего решения.
+3. После подготовки программа сама выбирает настройки, проходит стартовую подсказку и запускает оба теста. Оставьте окно видимым и не используйте мышь/клавиатуру.
+4. После успешного завершения откроется HTML-отчёт; исходные настройки будут восстановлены.
+
+Это **один EXE**: .NET, Tesseract и OCR-модель включены. Распаковывать архив, устанавливать SDK, Git или Visual Studio не нужно. Windows OCR и компоненты Steam проверяются отдельно; первое распаковывание внутренних библиотек в кэш Windows может занять время. Файл пока не имеет цифровой подписи издателя. Если Windows показывает предупреждение, сначала проверьте источник и SHA-256 из релиза.
+
+| Операционная система | Что доступно |
+|---|---|
+| **Windows 10/11 x64** | [Скачать EXE](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe), автоматические CPU/GPU-проходы |
+| Linux | Просмотр HTML/JSON-отчётов; запуск автоматизации не поддерживается |
+| macOS | Просмотр HTML/JSON-отчётов; запуск автоматизации не поддерживается |
+
+Benchmark Tool поставляется в Steam для Windows. Утилита использует Windows OCR и управление окном через Win32; сборок для Linux/macOS нет. [Поддержка платформ и команды просмотра отчёта →](docs/PLATFORMS.md)
+
+### Из исходников (Windows)
+
+Установите [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) и Git, затем выполните:
 
 ```powershell
 git clone https://github.com/huksleva/wukong-benchmark-automation.git
@@ -139,7 +163,7 @@ dotnet run --project src/Wukong.Automation -c Release -- start
 
 ```powershell
 dotnet run --project tests/Wukong.Tests -c Release
-dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-x64 --self-contained true -o artifacts/runner
+powershell -ExecutionPolicy Bypass -File packaging/Publish-Windows.ps1 -VerifyImageOcr
 ```
 
 ## GitHub Actions
@@ -149,18 +173,15 @@ dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-
 На отдельной машине GitHub с Windows workflow:
 
 1. Получает исходники и устанавливает .NET 8 SDK.
-2. Собирает приложение в режиме Release.
-3. Запускает автоматические проверки парсера FPS, INI, отчётов, конфигурации и распознавания стартовых экранов.
-4. Публикует сборку Windows x64 со встроенным .NET и сохраняет её в артефакт **`wukong-runner-windows`**.
+2. Собирает приложение и запускает автоматические проверки парсера FPS, INI, отчётов, конфигурации и распознавания стартовых экранов.
+3. Собирает автономный EXE с .NET, нативными библиотеками и OCR-моделью. Проверяет его запуск из папки без соседних DLL и разбор сохранённых CPU/GPU-данных.
+4. Сохраняет EXE, инструкции, сведения о коммите и SHA-256 в артефакт **`wukong-windows-exe`** на 14 дней.
 
-Чтобы скачать сборку, откройте **Actions → Build and checks → успешный запуск для нужного коммита → Artifacts → wukong-runner-windows**. Для скачивания артефактов войдите в GitHub. Распакуйте ZIP полностью и запустите `Wukong.Automation.exe` двойным щелчком: откроется мастер подготовки и запуска. **Устанавливать .NET отдельно не нужно.** В архиве есть `QUICKSTART.txt` и `build-info.json` с идентификатором исходного коммита. Артефакты хранятся 14 дней. Из PowerShell в распакованной папке также можно выполнить:
+**Для обычного запуска используйте [GitHub Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)**: ссылка загрузки в начале README ведёт на последний опубликованный релиз и не требует поиска артефактов CI. Релиз публикуется отдельно после проверки; каждый push не заменяет стабильную версию.
 
-```powershell
-.\Wukong.Automation.exe doctor
-.\Wukong.Automation.exe start
-```
+Для проверки свежего коммита: **Actions → Build and checks → успешный запуск → Artifacts → wukong-windows-exe**. GitHub требует входа для скачивания артефактов и выдаёт ZIP; извлеките из него EXE. Он работает самостоятельно. `build-info.json` указывает исходный коммит, `SHA256SUMS.txt` — контрольные суммы.
 
-Зелёный статус означает, что сборка и автоматические проверки прошли. **Actions не запускает Steam или Benchmark Tool и не измеряет FPS.** Проверка двух настоящих проходов выполняется локально и описана в [статусе проверки](docs/VALIDATION.md). Workflow находится в [.github/workflows/build.yml](.github/workflows/build.yml).
+Зелёный статус означает, что сборка и автоматические проверки прошли. **Actions не запускает Steam или Benchmark Tool и не измеряет FPS.** OCR настоящих PNG и диагностика автономного EXE дополнительно проверены локально; два настоящих прохода описаны в [статусе проверки](docs/VALIDATION.md). [Workflow](.github/workflows/build.yml) · [Сборка релиза](docs/RELEASING.md)
 
 
 | Документ | Содержание |

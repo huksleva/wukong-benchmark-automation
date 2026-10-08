@@ -16,17 +16,13 @@ jobs:
         run: dotnet build src/Wukong.Automation/Wukong.Automation.csproj -c Release
       - name: Run automated checks
         run: dotnet run --project tests/Wukong.Tests -c Release
-      - name: Publish Windows x64 application with .NET included
-        run: dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-x64 --self-contained true -o artifacts/runner
-      - name: Include launch instructions and build identity
+      - name: Build and smoke-test standalone Windows EXE
         shell: pwsh
-        run: |
-          Copy-Item packaging/QUICKSTART.txt artifacts/runner/QUICKSTART.txt
-          @{ commit = $env:GITHUB_SHA; platform = 'win-x64'; runtimeIncluded = $true } | ConvertTo-Json | Set-Content artifacts/runner/build-info.json
-      - name: Upload runnable Windows folder
+        run: ./packaging/Publish-Windows.ps1
+      - name: Upload standalone EXE and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: wukong-runner-windows
-          path: artifacts/runner/
+          name: wukong-windows-exe
+          path: artifacts/release/
           if-no-files-found: error
           retention-days: 14

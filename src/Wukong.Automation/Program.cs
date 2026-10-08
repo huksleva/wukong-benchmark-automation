@@ -281,7 +281,7 @@ internal static class Program
           start  [--config runner.local.json]   Guided setup checks, then both profiles (default).
           doctor [--config runner.local.json]   Check installation, OCR, CPU/GPU/RAM.
           run    [--config runner.local.json]   Run CPU and GPU profiles automatically.
-          parse  --image result.png             Parse an existing English result image.
+          parse  --image result.png             Parse an existing English or Russian result image.
           parse  --ocr result-ocr.json           Parse saved OCR data without a game.
         Ctrl+C cancels; settings are backed up and restored after closing the tool.
         Do not use the keyboard/mouse during a run; keep the benchmark unobscured.

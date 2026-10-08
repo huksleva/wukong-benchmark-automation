@@ -4,7 +4,7 @@
 
 ## Требования
 
-1. Windows 10/11 x64 с интерактивным рабочим столом. Для готового ZIP из Actions .NET включён в сборку; для сборки из исходников нужен [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+1. Windows 10/11 x64 с интерактивным рабочим столом. Для готового EXE из Releases .NET включён в сборку; для сборки из исходников нужен [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Steam, вход в аккаунт и установленный **бесплатный** [Black Myth: Wukong Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/) — AppID `3132990`. Покупка полной игры не требуется.
 3. Компонент English OCR Windows. Для русского интерфейса также нужен русский OCR Windows: утилита автоматически выбирает его при обнаружении русских подписей. `doctor` показывает его доступность. Если русского OCR нет, один раз выберите English в Benchmark Tool. Параметр `-culture=en` может быть переопределён сохранённым языком игры.
 4. Закройте работающий Benchmark Tool, оверлеи и диалоги Steam. Во время запуска оставьте окно теста видимым и не используйте клавиатуру/мышь. Steam и утилита должны работать с одинаковыми правами.
@@ -13,7 +13,18 @@
 
 ## Запуск готовой сборки
 
-[Скачайте ZIP из Actions](../README.md#github-actions), распакуйте все файлы в папку, доступную для записи, и запустите `Wukong.Automation.exe` двойным щелчком. Не запускайте EXE внутри ZIP и не переносите только EXE без остальных файлов. .NET, SDK, Git и Visual Studio для готовой сборки не нужны. Программа запускает `start` по умолчанию.
+[Скачайте Wukong.Automation-win-x64.exe](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe) в папку, доступную для записи, и запустите двойным щелчком. Это автономный файл: соседние DLL и ручная распаковка не нужны. .NET, SDK, Git и Visual Studio устанавливать не нужно. Программа запускает `start` по умолчанию.
+
+Windows OCR и Visual C++ Runtime остаются системными требованиями; `doctor` проверяет загрузку распознавания до запуска игры. Если компонентов нет, тест не начнётся, а консоль покажет причину. EXE не подписан сертификатом издателя; сверяйте источник загрузки и SHA-256 из [релиза](https://github.com/huksleva/wukong-benchmark-automation/releases/latest).
+
+Команды для скачанного EXE из PowerShell в его папке:
+
+```powershell
+.\Wukong.Automation-win-x64.exe doctor
+.\Wukong.Automation-win-x64.exe start
+```
+
+Альтернатива для разработчиков — [артефакт Actions](../README.md#github-actions). GitHub скачивает его как ZIP: извлеките EXE перед запуском. Старые сборки с именем `wukong-runner-windows` требуют полной распаковки всех файлов; новые `wukong-windows-exe` содержат самостоятельный EXE. [Платформы →](PLATFORMS.md)
 
 ## Запуск из исходников
 
@@ -60,10 +71,10 @@ dotnet run --project src/Wukong.Automation -c Release -- parse --ocr result-ocr.
 
 ```powershell
 dotnet run --project tests/Wukong.Tests -c Release
-dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-x64 --self-contained true -o artifacts/runner
+powershell -ExecutionPolicy Bypass -File packaging/Publish-Windows.ps1 -VerifyImageOcr
 ```
 
-В каталоге `artifacts/runner` можно запускать `Wukong.Automation.exe doctor` и `Wukong.Automation.exe run`. В такую сборку уже включён .NET; его отдельная установка не нужна. GitHub Actions собирает Windows-версию, запускает автоматические проверки и сохраняет архив сборки. [Что проверяет CI и где скачать сборку →](../README.md#github-actions)
+В `artifacts/release` появятся автономный EXE, SHA-256, инструкции и сведения об исходном коммите. Параметр `-VerifyImageOcr` дополнительно проверяет OCR настоящих CPU/GPU-изображений и требует Windows OCR. CI выполняет проверку запуска и разбора сохранённых OCR-данных без установки игры. [Публикация релиза →](RELEASING.md) · [Что проверяет CI →](../README.md#github-actions)
 
 ## Диагностика
 
@@ -82,6 +93,6 @@ dotnet publish src/Wukong.Automation/Wukong.Automation.csproj -c Release -r win-
 
 ## Локальное распознавание чисел
 
-Tesseract, его нативные DLL и модель входят в готовую сборку. Распакуйте весь ZIP: папки `x64`, `tessdata` и остальные файлы должны остаться рядом с EXE. `doctor` проверяет загрузку цифрового OCR до запуска игры.
+Tesseract, его нативные DLL и модель включены в автономный EXE. .NET автоматически извлекает внутренние файлы в пользовательский кэш `%TEMP%/.net` при первом запуске; вручную создавать папки рядом с EXE не нужно. `doctor` проверяет загрузку цифрового OCR до запуска игры.
 
 Нативной библиотеке нужен Microsoft Visual C++ Runtime x64 (2015–2022). Обычно он уже установлен вместе с играми через Steam. Если проверка не проходит из-за отсутствующей нативной библиотеки, установите [официальный Microsoft Visual C++ Redistributable x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) и повторите `start`.
