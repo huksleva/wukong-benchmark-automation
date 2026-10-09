@@ -11,6 +11,7 @@
   <a href="https://learn.microsoft.com/dotnet/csharp/"><img src="https://img.shields.io/badge/C%23-512BD4?style=flat" alt="C#"></a>
   <a href="https://dotnet.microsoft.com/download/dotnet/8.0"><img src="https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white" alt=".NET 8"></a>
   <a href="https://github.com/charlesw/tesseract"><img src="https://img.shields.io/badge/Tesseract-5.2-4A8F4A" alt="Local Tesseract OCR"></a>
+  <a href="docs/DOCKER.md"><img src="https://img.shields.io/badge/Docker-Reports-2496ED?logo=docker&logoColor=white" alt="Docker: portable reports"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4" alt="Windows 10 / 11">
   <a href="https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/"><img src="https://img.shields.io/badge/Steam-3132990-171A21?logo=steam&logoColor=white" alt="Steam AppID 3132990"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2EA44F" alt="MIT License"></a>
@@ -76,7 +77,7 @@ HTML на GitHub доступен как исходный файл. Чтобы �
 
 Нужны Windows 10/11 **x64**, Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
 
-### Скачать и запустить
+### Способ 1: обычный запуск без Docker
 
 **[Скачать EXE для Windows x64](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe)** · [Все файлы релиза и SHA-256](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)
 
@@ -94,6 +95,18 @@ HTML на GitHub доступен как исходный файл. Чтобы �
 | macOS Intel / Apple Silicon | [Скачать Wukong Reports](docs/PLATFORMS.md#macos): чтение отчётов и разбор сохранённых OCR-данных |
 
 **Два новых игровых прохода запускает только Windows-приложение.** Нативный `wukong-reports` для Linux/macOS работает без Steam и установленного .NET, выводит сохранённые FPS в терминал и содержит настоящий отчёт Windows от 8 октября. Он не измеряет производительность текущего компьютера. [Готовые архивы, команды запуска и ограничения →](docs/PLATFORMS.md)
+
+### Способ 2: Docker — одна команда на всех ОС
+
+Установите и запустите Docker с Compose, [скачайте ZIP проекта](https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip), распакуйте его и откройте терминал в папке с `compose.yaml`. На Windows используйте Linux containers. Затем выполните одинаковую команду в PowerShell, bash или zsh:
+
+```text
+docker compose run --rm --build reports
+```
+
+Docker соберёт **Wukong Reports**, покажет включённый настоящий Windows-отчёт и завершит работу. Для этого не нужны Steam, .NET SDK или браузер. Это чтение сохранённых результатов, а не новый замер текущего компьютера. Для своих отчётов папка `results/` подключается только для чтения. **Новые CPU/GPU-проходы запускайте способом 1 на Windows.**
+
+[Docker: свой отчёт, требования и решение ошибок →](docs/DOCKER.md) · [Linux/macOS без Docker →](docs/PLATFORMS.md)
 
 ### Из исходников (Windows)
 
@@ -191,7 +204,7 @@ dotnet run --project src/Wukong.Reports -c Release
 dotnet run --project tests/Wukong.Engine.Tests -c Release
 ```
 
-`Wukong.Engine` не использует Windows API: окно и OCR подключаются через интерфейсы адаптеров. Сейчас рабочие адаптеры есть для Windows; Linux-адаптер и полный контейнерный запуск ещё предстоит реализовать и проверить. [План Linux/Docker и усиления проекта →](docs/PORTING.md)
+`Wukong.Engine` не использует Windows API: окно и OCR подключаются через интерфейсы адаптеров. Сейчас рабочие игровые адаптеры есть для Windows; Linux-адаптер и игровой контейнерный запуск ещё предстоит реализовать и проверить. Docker для сохранённых отчётов уже доступен. [План Linux/Docker и усиления проекта →](docs/PORTING.md)
 
 ## GitHub Actions
 
@@ -206,6 +219,8 @@ dotnet run --project tests/Wukong.Engine.Tests -c Release
 
 В четырёх дополнительных заданиях на Linux x64/ARM64 и macOS Intel/Apple Silicon workflow собирает нативный `wukong-reports` с включённым .NET. На каждой ОС он также запускает 5 проверок общего сценария меню с тестовыми адаптерами и 11 проверок CLI: чтение настоящего отчёта, разбор CPU/GPU OCR, диагностику и обработку неправильного ввода. Проверки повторяются после распаковки готового архива в папку с пробелами. Архив и SHA-256 сохраняются в `wukong-reports-<архитектура>` на 14 дней. Эти задания не запускают игру.
 
+В двух заданиях **Docker / amd64** и **Docker / arm64** workflow собирает контейнер Reports на соответствующей архитектуре и выполняет 15 интеграционных проверок: пример и собственный отчёт через bind mount, OCR JSON, ошибки ввода, запрет записи, запуск без root и настройки изоляции. Сборки не публикуют образ в registry: Docker-вариант собирается одной командой из исходников. [Как запустить →](docs/DOCKER.md)
+
 **Для обычного запуска используйте [GitHub Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)**: ссылка загрузки в начале README ведёт на последний опубликованный релиз и не требует поиска артефактов CI. Релиз публикуется отдельно после проверки; каждый push не заменяет стабильную версию.
 
 Для проверки свежего коммита: **Actions → Build and checks → успешный запуск → Artifacts → wukong-windows-exe**. GitHub требует входа для скачивания артефактов и выдаёт ZIP; извлеките из него EXE. Он работает самостоятельно. `build-info.json` указывает исходный коммит, `SHA256SUMS.txt` — контрольные суммы.
@@ -216,6 +231,7 @@ dotnet run --project tests/Wukong.Engine.Tests -c Release
 | Документ | Содержание |
 |---|---|
 | [Архитектура](docs/ARCHITECTURE.md) | Компоненты, сценарий и генерация HTML |
+| [Docker](docs/DOCKER.md) | Одна команда для отчётов на Windows/Linux/macOS |
 | [План развития](docs/PORTING.md) | Полный Linux-порт, Docker и критерии готовности |
 | [Contributing](CONTRIBUTING.md) | Как сообщить об ошибке и предложить изменение |
 | [Security](SECURITY.md) | Приватное сообщение об уязвимости |
