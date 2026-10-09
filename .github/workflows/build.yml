@@ -16,6 +16,8 @@ jobs:
         run: dotnet build src/Wukong.Automation/Wukong.Automation.csproj -c Release
       - name: Run automated checks
         run: dotnet run --project tests/Wukong.Tests -c Release
+      - name: Check portable menu state machine
+        run: dotnet run --project tests/Wukong.Engine.Tests -c Release
       - name: Build and smoke-test standalone Windows EXE
         shell: pwsh
         run: ./packaging/Publish-Windows.ps1
@@ -49,6 +51,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Check portable menu state machine
+        run: dotnet run --project tests/Wukong.Engine.Tests -c Release
       - name: Build and verify native report reader
         run: python3 packaging/publish-reports.py --rid ${{ matrix.rid }}
       - name: Upload native package and SHA-256

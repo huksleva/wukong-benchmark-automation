@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Wukong.Automation;
 
 /// <summary>Win32 access is confined to the selected Benchmark Tool window.</summary>
-public sealed class NativeWindow(nint handle)
+public sealed class NativeWindow(nint handle) : IBenchmarkWindow
 {
     public nint Handle { get; } = handle;
     private const uint InputKeyboard = 1, KeyUp = 2;
@@ -76,6 +76,16 @@ public sealed class NativeWindow(nint handle)
         try { Thread.Sleep(150); }
         finally { Send([new() { Type = 0, Data = new() { Mouse = new() { Flags = MouseLeftUp } } }]); }
     }
+
+    void IBenchmarkWindow.Key(BenchmarkKey key) => Key(key switch
+    {
+        BenchmarkKey.Enter => Enter,
+        BenchmarkKey.Escape => Escape,
+        BenchmarkKey.Left => Left,
+        BenchmarkKey.Right => Right,
+        BenchmarkKey.Apply => 0x54,
+        _ => throw new ArgumentOutOfRangeException(nameof(key))
+    });
 
     public void Key(ushort key)
     {

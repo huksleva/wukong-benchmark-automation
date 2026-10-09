@@ -5,7 +5,7 @@ using Wukong.Core;
 
 namespace Wukong.Automation;
 
-public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOptions options, string directory, Action<string> log)
+public sealed class UiAutomation(IBenchmarkWindow window, IBenchmarkOcr ocr, RunnerOptions options, string directory, Action<string> log)
 {
     private int captureIndex;
     private string? latestCapture;
@@ -63,7 +63,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             {
                 var prompt = Label(page, "continue")!;
                 log("Startup: continue prompt detected; sending input to the benchmark window.");
-                if (continues++ < 2) window.Key(NativeWindow.Enter);
+                if (continues++ < 2) window.Key(BenchmarkKey.Enter);
                 else window.Click(prompt.Bounds.CenterX, prompt.Bounds.CenterY);
             }
             if ((int)time.Elapsed.TotalSeconds % 30 < options.PollIntervalMilliseconds / 1000)
@@ -196,7 +196,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             // before leaving the panel; never discard the requested profile.
             if (Confirmation(page) is { } pending)
                 window.Click(pending.Bounds.CenterX, pending.Bounds.CenterY);
-            else window.Key(NativeWindow.Escape);
+            else window.Key(BenchmarkKey.Escape);
             await Pause(token);
             page = await ObserveAsync(key + "-navigation", token);
             tab = FindTab(page);
@@ -284,12 +284,12 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
             // verify through OCR; avoid 75 full captures for individual increments.
             if (key == "superResolutionScale" && target == 100)
             {
-                for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Right); await Task.Delay(60, token); }
+                for (var i = 0; i < 110; i++) { window.Key(BenchmarkKey.Right); await Task.Delay(60, token); }
                 await Pause(token);
                 var maximum = await ReadRowAsync(key, token);
                 return Matches(maximum.Value, choices) ? new(Labels(key)[0], maximum.Value, "UI verified") : null;
             }
-            for (var i = 0; i < 110; i++) { window.Key(NativeWindow.Left); await Task.Delay(12, token); }
+            for (var i = 0; i < 110; i++) { window.Key(BenchmarkKey.Left); await Task.Delay(12, token); }
             for (var i = 0; i < steps; i++)
             {
                 var current = RowFrom(await ObserveAsync(key + "-slider", token), key);
@@ -297,7 +297,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
                 current = await EnrichRowAsync(current, key, token);
                 if (Matches(current.Value, choices)) return new(Labels(key)[0], current.Value, "UI verified");
                 if (int.TryParse(current.Value.Trim().TrimEnd('%'), out var numeric) && numeric > target) break;
-                window.Key(NativeWindow.Right);
+                window.Key(BenchmarkKey.Right);
                 await Task.Delay(60, token);
             }
             return null;
@@ -310,7 +310,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
                 if (Matches(row.Value, choices)) return new(Labels(key)[0], row.Value, "UI verified");
                 if (!seen.Add(row.Value)) break;
                 window.Click(row.ValueX, row.Label.Bounds.CenterY);
-                window.Key(direction == 0 ? NativeWindow.Right : NativeWindow.Left);
+                window.Key(direction == 0 ? BenchmarkKey.Right : BenchmarkKey.Left);
                 await Pause(token);
                 var page = await ObserveAsync(key + "-change", token);
                 // RT toggles may display a known restart/confirmation dialog.
@@ -342,7 +342,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         {
             // The bottom Apply caption is a keyboard hint, not a clickable button.
             // Use the game's T command only after recognizing that hint.
-            if (apply.Bounds.CenterY > page.Height * .8) window.Key(0x54);
+            if (apply.Bounds.CenterY > page.Height * .8) window.Key(BenchmarkKey.Apply);
             else window.Click(apply.Bounds.CenterX, apply.Bounds.CenterY);
             await Pause(token);
             var confirmation = await ObserveAsync("after-apply", token);
@@ -361,7 +361,7 @@ public sealed class UiAutomation(NativeWindow window, WindowsOcr ocr, RunnerOpti
         // similarly named Benchmark category while still inside Settings.
         for (var attempt = 0; attempt < 3 && (InSettings(page) || Label(page, "settings") is null); attempt++)
         {
-            window.Key(NativeWindow.Escape);
+            window.Key(BenchmarkKey.Escape);
             await Pause(token);
             page = await ObserveAsync("main-menu", token);
         }

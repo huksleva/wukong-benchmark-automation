@@ -6,7 +6,7 @@ using Wukong.Core;
 
 namespace Wukong.Automation;
 
-public sealed class WindowsOcr : IDisposable
+public sealed class WindowsOcr : IBenchmarkOcr
 {
     private readonly OcrEngine engine = OcrEngine.TryCreateFromLanguage(new Language("en-US"))
         ?? throw new InvalidOperationException("Windows English OCR is not installed. Add English (United States) in Windows Settings > Language, including Basic typing.");

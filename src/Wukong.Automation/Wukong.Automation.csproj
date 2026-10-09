@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Wukong.Core/Wukong.Core.csproj" />
+    <ProjectReference Include="../Wukong.Engine/Wukong.Engine.csproj" />
     <None Include="../../runner.example.json" Link="runner.example.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
