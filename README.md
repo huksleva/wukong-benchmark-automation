@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe"><strong>⬇ Скачать для Windows x64 — один EXE</strong></a> ·
+  <a href="https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe"><strong>Скачать для Windows x64 — один EXE</strong></a> ·
   <a href="docs/PLATFORMS.md">Linux / macOS: скачать приложение для отчётов</a>
 </p>
 
@@ -216,5 +216,3 @@ dotnet run --project src/Wukong.Reports -c Release
 ## Лицензия
 
 [MIT](LICENSE) · © 2026 Leonid Tots. Независимый проект; не связан с Game Science, Valve или VK. Названия сторонних продуктов принадлежат их владельцам.
-
-Решение подготовлено с помощью ИИ-помощника Codex; статус реальной проверки указан отдельно.
