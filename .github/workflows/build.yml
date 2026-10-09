@@ -26,3 +26,37 @@ jobs:
           path: artifacts/release/
           if-no-files-found: error
           retention-days: 14
+  reports:
+    name: Reports / ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            rid: linux-x64
+          - runner: ubuntu-24.04-arm
+            rid: linux-arm64
+          - runner: macos-15-intel
+            rid: osx-x64
+          - runner: macos-15
+            rid: osx-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build and verify native report reader
+        run: python3 packaging/publish-reports.py --rid ${{ matrix.rid }}
+      - name: Upload native package and SHA-256
+        uses: actions/upload-artifact@v4
+        with:
+          name: wukong-reports-${{ matrix.rid }}
+          path: |
+            artifacts/reports/${{ matrix.rid }}/*.tar.gz
+            artifacts/reports/${{ matrix.rid }}/*.sha256
+          if-no-files-found: error
+          retention-days: 14

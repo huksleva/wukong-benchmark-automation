@@ -27,7 +27,7 @@
 
 <p align="center">
   <a href="https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe"><strong>⬇ Скачать для Windows x64 — один EXE</strong></a> ·
-  <a href="docs/PLATFORMS.md">Linux / macOS: поддержка платформ</a>
+  <a href="docs/PLATFORMS.md">Linux / macOS: скачать приложение для отчётов</a>
 </p>
 
 Утилита на C# запускает **Black Myth: Wukong Benchmark Tool** из Steam с CPU- и GPU-профилями, распознаёт итоговый экран через **Windows OCR** и локальный **Tesseract** для цифр и сохраняет FPS, оборудование и настройки в **HTML и JSON**.
@@ -90,10 +90,10 @@ HTML на GitHub доступен как исходный файл. Чтобы �
 | Операционная система | Что доступно |
 |---|---|
 | **Windows 10/11 x64** | [Скачать EXE](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe), автоматические CPU/GPU-проходы |
-| Linux | Просмотр HTML/JSON-отчётов; запуск автоматизации не поддерживается |
-| macOS | Просмотр HTML/JSON-отчётов; запуск автоматизации не поддерживается |
+| Linux x64 / ARM64 | [Скачать Wukong Reports](docs/PLATFORMS.md#linux): чтение отчётов и разбор сохранённых OCR-данных |
+| macOS Intel / Apple Silicon | [Скачать Wukong Reports](docs/PLATFORMS.md#macos): чтение отчётов и разбор сохранённых OCR-данных |
 
-Benchmark Tool поставляется в Steam для Windows. Утилита использует Windows OCR и управление окном через Win32; сборок для Linux/macOS нет. [Поддержка платформ и команды просмотра отчёта →](docs/PLATFORMS.md)
+**Два новых игровых прохода запускает только Windows-приложение.** Нативный `wukong-reports` для Linux/macOS работает без Steam и установленного .NET, выводит сохранённые FPS в терминал и содержит настоящий отчёт Windows от 8 октября. Он не измеряет производительность текущего компьютера. [Готовые архивы, команды запуска и ограничения →](docs/PLATFORMS.md)
 
 ### Из исходников (Windows)
 
@@ -165,10 +165,25 @@ Chrome не требуется: HTML открывается приложение
 
 ## Разработка
 
+Этот раздел нужен тем, кто меняет код или собирает приложение самостоятельно. Для обычного запуска достаточно скачать готовую программу в [Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest).
+
+Из корня репозитория на Windows с .NET 8 SDK:
+
 ```powershell
 dotnet run --project tests/Wukong.Tests -c Release
 powershell -ExecutionPolicy Bypass -File packaging/Publish-Windows.ps1 -VerifyImageOcr
 ```
+
+Первая команда `dotnet run --project tests/Wukong.Tests -c Release` собирает и запускает **проверки кода**, а не игровой бенчмарк. `--project` выбирает проект, `-c Release` — конфигурацию сборки. Вторая команда запускает PowerShell-скрипт упаковки EXE; `-VerifyImageOcr` дополнительно проверяет распознавание двух сохранённых PNG. `-ExecutionPolicy Bypass` относится к этому процессу PowerShell и не меняет постоянную политику системы.
+
+Переносимый инструмент можно запустить из исходников на Windows/Linux/macOS с .NET 8 SDK:
+
+```bash
+dotnet run --project src/Wukong.Reports -c Release -- --help
+dotnet run --project src/Wukong.Reports -c Release
+```
+
+Без аргументов он показывает включённый отчёт, не запускает тест. Сборка нативного архива требует также Python 3.12+: например, `python3 packaging/publish-reports.py --rid linux-x64` на Linux x64. Скрипт выполняет проверки на ОС сборки, поэтому выбранная архитектура должна соответствовать компьютеру. [Публикация пакетов →](docs/RELEASING.md)
 
 ## GitHub Actions
 
@@ -180,6 +195,8 @@ powershell -ExecutionPolicy Bypass -File packaging/Publish-Windows.ps1 -VerifyIm
 2. Собирает приложение и запускает автоматические проверки парсера FPS, INI, отчётов, конфигурации и распознавания стартовых экранов.
 3. Собирает автономный EXE с .NET, нативными библиотеками и OCR-моделью. Проверяет его запуск из папки без соседних DLL и разбор сохранённых CPU/GPU-данных.
 4. Сохраняет EXE, инструкции, сведения о коммите и SHA-256 в артефакт **`wukong-windows-exe`** на 14 дней.
+
+В четырёх дополнительных заданиях на Linux x64/ARM64 и macOS Intel/Apple Silicon workflow собирает нативный `wukong-reports` с включённым .NET. На каждой ОС он запускает 11 проверок CLI: чтение настоящего отчёта, разбор CPU/GPU OCR, диагностику и обработку неправильного ввода. Проверки повторяются после распаковки готового архива в папку с пробелами. Архив и SHA-256 сохраняются в `wukong-reports-<архитектура>` на 14 дней. Эти задания не запускают игру.
 
 **Для обычного запуска используйте [GitHub Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)**: ссылка загрузки в начале README ведёт на последний опубликованный релиз и не требует поиска артефактов CI. Релиз публикуется отдельно после проверки; каждый push не заменяет стабильную версию.
 

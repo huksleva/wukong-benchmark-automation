@@ -1,4 +1,4 @@
-Wukong Benchmark Automation 0.1.1 — Windows 10/11 x64
+Wukong Benchmark Automation 0.2.0 — Windows 10/11 x64
 
 Download Wukong.Automation-win-x64.exe from GitHub Releases into a writable folder
 and double-click it. This is ONE self-contained EXE: no ZIP extraction, .NET SDK,
@@ -31,9 +31,9 @@ PowerShell, in the EXE folder:
   .\Wukong.Automation-win-x64.exe start
   .\Wukong.Automation-win-x64.exe --help
 
-Linux/macOS: no automation executable. Existing HTML/JSON reports can be viewed
-on either platform; the current Windows OCR and Win32 implementation is required
-for running the tests. No Wine/Proton support is claimed.
+Linux/macOS: download the separate Wukong Reports native archive to read saved
+reports and OCR JSON. It does not launch Steam or run new tests. See docs/PLATFORMS.md
+for download links and commands. No Wine/Proton benchmark automation is claimed.
 
 Usage: https://github.com/huksleva/wukong-benchmark-automation/blob/main/docs/USAGE.md
 Releases: https://github.com/huksleva/wukong-benchmark-automation/releases/latest

@@ -1,4 +1,4 @@
-﻿# Build a self-contained Windows EXE and verify it without adjacent DLLs.
+# Build a self-contained Windows EXE and verify it without adjacent DLLs.
 [CmdletBinding()]
 param([switch]$VerifyImageOcr)
 $ErrorActionPreference = 'Stop'
@@ -45,7 +45,7 @@ try {
     $commit = git rev-parse HEAD
     if ($LASTEXITCODE -ne 0) { throw 'Cannot identify source commit.' }
     @{ commit = $commit; platform = 'win-x64'; runtimeIncluded = $true; singleFile = $true;
-       imageOcrChecked = [bool]$VerifyImageOcr; version = '0.1.1' } |
+       imageOcrChecked = [bool]$VerifyImageOcr; version = '0.2.0' } |
        ConvertTo-Json | Set-Content (Join-Path $destination 'build-info.json') -Encoding UTF8
     $assets = @($name, 'QUICKSTART.txt', 'THIRD_PARTY_NOTICES.md', 'LICENSE', 'build-info.json')
     $hashes = foreach ($asset in $assets) {
