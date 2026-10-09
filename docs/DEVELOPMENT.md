@@ -28,7 +28,7 @@ dotnet run --project src/Wukong.Reports -c Release
 dotnet run --project tests/Wukong.Engine.Tests -c Release
 ```
 
-`Wukong.Engine` не использует Windows API: окно и OCR подключаются через интерфейсы адаптеров. Сейчас рабочие игровые адаптеры есть для Windows; Linux-адаптер и игровой контейнерный запуск ещё предстоит реализовать и проверить. Docker для сохранённых отчётов уже доступен. [План Linux/Docker и усиления проекта →](PORTING.md)
+`Wukong.Engine` не использует Windows API: окно и OCR подключаются через интерфейсы адаптеров. Сейчас рабочие игровые адаптеры есть для Windows; игровые адаптеры для Linux/macOS ещё предстоит реализовать и проверить. [План переноса и усиления проекта →](PORTING.md)
 
 ## Запуск из исходников (Windows)
 

@@ -64,27 +64,3 @@ jobs:
             artifacts/reports/${{ matrix.rid }}/*.sha256
           if-no-files-found: error
           retention-days: 14
-  containers:
-    name: Docker / ${{ matrix.architecture }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-22.04
-            architecture: amd64
-          - runner: ubuntu-24.04-arm
-            architecture: arm64
-    runs-on: ${{ matrix.runner }}
-    env:
-      SOURCE_REVISION: ${{ github.sha }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Validate Compose and build report container
-        run: |
-          docker compose config --quiet
-          docker compose up --build --exit-code-from reports
-      - name: Verify CLI, real report fixtures and container isolation
-        run: python3 tests/docker/check_container.py

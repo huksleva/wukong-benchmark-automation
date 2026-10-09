@@ -11,7 +11,6 @@
   <a href="https://learn.microsoft.com/dotnet/csharp/"><img src="https://img.shields.io/badge/C%23-512BD4?style=flat" alt="C#"></a>
   <a href="https://dotnet.microsoft.com/download/dotnet/8.0"><img src="https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white" alt=".NET 8"></a>
   <a href="https://github.com/charlesw/tesseract"><img src="https://img.shields.io/badge/Tesseract-5.2-4A8F4A" alt="Local Tesseract OCR"></a>
-  <a href="docs/DOCKER.md"><img src="https://img.shields.io/badge/Docker-Reports-2496ED?logo=docker&logoColor=white" alt="Docker: portable reports"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4" alt="Windows 10 / 11">
   <a href="https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/"><img src="https://img.shields.io/badge/Steam-3132990-171A21?logo=steam&logoColor=white" alt="Steam AppID 3132990"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2EA44F" alt="MIT License"></a>
@@ -45,29 +44,14 @@
 
 ## Быстрый старт
 
-**Выберите один вариант и скопируйте его блок целиком кнопкой Copy.** Команды запуска собраны здесь. Для Docker и запуска из исходников заранее установите [Git](https://git-scm.com/downloads); выполняйте команды из папки, в которой хотите разместить проект.
+**Выберите один вариант и скопируйте его блок целиком кнопкой Copy.** Команды запуска собраны здесь. Для запуска из исходников заранее установите [Git](https://git-scm.com/downloads); выполняйте команды из папки, в которой хотите разместить проект.
 
 | Задача | Вариант | Что нужно заранее |
 |---|---|---|
-| Посмотреть сохранённый отчёт на Windows, Linux или macOS | [Docker](#docker) | Git и запущенный Docker с Compose |
 | Выполнить два новых игровых теста | [Windows](#windows) | Windows 10/11 x64; для готового EXE дополнительные инструменты не нужны |
-| Посмотреть отчёт без Docker на Linux/macOS | [Linux и macOS](#linux-и-macos) | Готовая сборка; для запуска из исходников — Git и .NET 8 SDK |
+| Посмотреть сохранённый отчёт на Linux/macOS | [Linux и macOS](#linux-и-macos) | Готовая сборка; для запуска из исходников — Git и .NET 8 SDK |
 
-**Новые CPU/GPU-замеры выполняет Windows-приложение.** Docker и Linux/macOS читают сохранённые данные; включённый пример — настоящий Windows-замер от 8 октября 2026 года.
-
-### Docker
-
-Установите и запустите [Docker с Compose](https://docs.docker.com/get-started/get-docker/). На Windows используйте **Linux containers**. Откройте PowerShell на Windows или Terminal на Linux/macOS и вставьте весь блок:
-
-```bash
-git clone https://github.com/huksleva/wukong-benchmark-automation.git
-cd wukong-benchmark-automation
-docker compose up --build --exit-code-from reports
-```
-
-`git clone` скачивает проект, `cd` переходит в его папку, `docker compose up` собирает и запускает контейнер. Флаг `--build` включает сборку, а `--exit-code-from reports` возвращает код завершения приложения и останавливает Compose после вывода отчёта. Современная команда Compose пишется как `docker compose`, с пробелом.
-
-При первом запуске нужен интернет для скачивания исходников, базовых образов .NET и зависимостей. Контейнер выведет оборудование и CPU/GPU FPS из сохранённого отчёта и завершится. Повторная сборка использует кэш. Свои отчёты можно поместить в `results/` проекта; контейнер читает эту папку только для чтения. [Свой отчёт и диагностика Docker →](docs/DOCKER.md)
+**Новые CPU/GPU-замеры выполняет Windows-приложение.** Linux/macOS читают сохранённые данные; включённый пример — настоящий Windows-замер от 8 октября 2026 года.
 
 ### Windows
 
@@ -180,7 +164,7 @@ Chrome не требуется: HTML открывается приложение
 
 Для изменения кода, запуска проверок и сборки из исходников используйте [инструкцию разработчика](docs/DEVELOPMENT.md). Для обычного запуска выберите готовый блок в [быстром старте](#быстрый-старт).
 
-`Wukong.Engine` подключает окно и OCR через интерфейсы адаптеров. Игровые адаптеры сейчас реализованы для Windows; Docker и нативный Reports читают сохранённые данные. [План переноса и развития →](docs/PORTING.md)
+`Wukong.Engine` подключает окно и OCR через интерфейсы адаптеров. Игровые адаптеры сейчас реализованы для Windows; нативный Reports читает сохранённые данные. [План переноса и развития →](docs/PORTING.md)
 
 ## GitHub Actions
 
@@ -195,8 +179,6 @@ Chrome не требуется: HTML открывается приложение
 
 В четырёх дополнительных заданиях на Linux x64/ARM64 и macOS Intel/Apple Silicon workflow собирает нативный `wukong-reports` с включённым .NET. На каждой ОС он также запускает 5 проверок общего сценария меню с тестовыми адаптерами и 11 проверок CLI: чтение настоящего отчёта, разбор CPU/GPU OCR, диагностику и обработку неправильного ввода. Проверки повторяются после распаковки готового архива в папку с пробелами. Архив и SHA-256 сохраняются в `wukong-reports-<архитектура>` на 14 дней. Эти задания не запускают игру.
 
-В двух заданиях **Docker / amd64** и **Docker / arm64** workflow собирает контейнер Reports на соответствующей архитектуре и выполняет 15 интеграционных проверок: пример и собственный отчёт через bind mount, OCR JSON, ошибки ввода, запрет записи, запуск без root и настройки изоляции. Сборки не публикуют образ в registry: Docker-вариант собирается одной командой из исходников. [Как запустить →](docs/DOCKER.md)
-
 **Для обычного запуска используйте [GitHub Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)**: ссылка загрузки в начале README ведёт на последний опубликованный релиз и не требует поиска артефактов CI. Релиз публикуется отдельно после проверки; каждый push не заменяет стабильную версию.
 
 Для проверки свежего коммита: **Actions → Build and checks → успешный запуск → Artifacts → wukong-windows-exe**. GitHub требует входа для скачивания артефактов и выдаёт ZIP; извлеките из него EXE. Он работает самостоятельно. `build-info.json` указывает исходный коммит, `SHA256SUMS.txt` — контрольные суммы.
@@ -208,8 +190,7 @@ Chrome не требуется: HTML открывается приложение
 |---|---|
 | [Разработка](docs/DEVELOPMENT.md) | Исходники, проверки и сборка |
 | [Архитектура](docs/ARCHITECTURE.md) | Компоненты, сценарий и генерация HTML |
-| [Docker](docs/DOCKER.md) | Одна команда для отчётов на Windows/Linux/macOS |
-| [План развития](docs/PORTING.md) | Полный Linux-порт, Docker и критерии готовности |
+| [План развития](docs/PORTING.md) | Полный Linux-порт и критерии готовности |
 | [Contributing](CONTRIBUTING.md) | Как сообщить об ошибке и предложить изменение |
 | [Security](SECURITY.md) | Приватное сообщение об уязвимости |
 | [Code of conduct](CODE_OF_CONDUCT.md) | Правила общения в проекте |

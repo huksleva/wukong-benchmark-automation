@@ -13,8 +13,6 @@
 | macOS Intel | Не реализовано | [Скачать архив](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Reports-osx-x64.tar.gz) |
 | Windows ARM64 / x86 | Нативной сборки нет; эмуляция не проверена | Просмотр HTML/JSON в подходящем приложении |
 
-Для этих же сохранённых данных есть второй вариант: [Docker — одна команда на Windows/Linux/macOS](DOCKER.md). Он не требует нативного архива или .NET на хосте.
-
 ## Windows
 
 Скачайте EXE в доступную для записи папку и откройте двойным щелчком. Альтернатива из PowerShell в его папке:
@@ -51,7 +49,7 @@
 )
 ```
 
-Проверяется на GitHub runners: Ubuntu 22.04 x64 и Ubuntu 24.04 ARM64. Используется glibc-сборка; Alpine/musl не поддерживается этим архивом. Минимальный контейнер может потребовать [системные библиотеки .NET](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu#dependencies) (например, OpenSSL и zlib); SDK и отдельный .NET Runtime не требуются. Это не обещание запуска на любом дистрибутиве.
+Проверяется на GitHub runners: Ubuntu 22.04 x64 и Ubuntu 24.04 ARM64. Используется glibc-сборка; Alpine/musl не поддерживается этим архивом. Минимальная установка Linux может потребовать [системные библиотеки .NET](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu#dependencies) (например, OpenSSL и zlib); SDK и отдельный .NET Runtime не требуются. Это не обещание запуска на любом дистрибутиве.
 
 ## macOS
 

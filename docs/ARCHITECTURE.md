@@ -19,8 +19,7 @@ flowchart LR
 | `Wukong.Core` | Модели, проверка FPS, редактирование INI, формирование отчётов |
 | `Wukong.Engine` | Переносимые профили, INI, распознавание состояний меню и сценарий прохода; `IBenchmarkWindow` / `IBenchmarkOcr` |
 | `Wukong.Automation` | Windows CLI, Steam, Win32, Windows OCR / Tesseract, оборудование и оркестрация двух проходов |
-| `Wukong.Reports` | Переносимый CLI для чтения сохранённых отчётов и OCR JSON: нативные архивы или Docker |
-| `Dockerfile` / `compose.yaml` | Сборка Core/Reports и запуск без сети с отчётами только для чтения |
+| `Wukong.Reports` | Переносимый CLI для чтения сохранённых отчётов и OCR JSON: нативные архивы |
 | `Wukong.Engine.Tests` | Проверки общего сценария с тестовыми оконным и OCR-адаптерами на всех ОС |
 | `Wukong.Tests` | Проверки парсера, INI, конфигурации и экранирования HTML |
 | `DocumentationPreview` | Воспроизводимый пример отчёта для документации |
