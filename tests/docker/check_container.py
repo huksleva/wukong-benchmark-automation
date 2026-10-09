@@ -9,6 +9,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 COMPOSE = ["docker", "compose", "-f", str(ROOT / "compose.yaml")]
 PASSED = []
+inputs = ROOT / "results"
+inputs.mkdir(exist_ok=True)
 
 
 def command(args, ok=True):
@@ -51,8 +53,6 @@ for profile, expected in [("cpu", (27, 22, 32, 24)), ("gpu", (2, 2, 2, 2))]:
 
 # Files are created under the service's real host mount; paths include spaces.
 # Linux CI runs Docker with a different UID, so fixtures must be readable by it.
-inputs = ROOT / "results"
-inputs.mkdir(exist_ok=True)
 with tempfile.TemporaryDirectory(prefix="docker checks ", dir=inputs) as temporary:
     folder = Path(temporary)
     folder.chmod(0o755)

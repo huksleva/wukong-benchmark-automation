@@ -4,7 +4,8 @@ obj/
 .idea/
 work/
 artifacts/
-/results/
+/results/*
+!/results/.gitkeep
 runner.local.json
 *.user
 *.suo

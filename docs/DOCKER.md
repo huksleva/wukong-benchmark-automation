@@ -22,7 +22,7 @@ docker compose run --rm --build reports
 
 ## Свой результат
 
-Compose подключает папку `results/` проекта в `/data` **только для чтения**. Если её ещё нет, Docker создаст её. Скопируйте в неё сохранённую папку запуска, включая JSON, HTML и изображения. Например, при наличии `results/my-run/report.json`:
+Compose подключает папку `results/` проекта в `/data` **только для чтения**. Пустая папка уже включена в исходники, чтобы на Linux она принадлежала пользователю после распаковки. Не удаляйте её перед запуском. Скопируйте в неё сохранённую папку запуска, включая JSON, HTML и изображения. Например, при наличии `results/my-run/report.json`:
 
 ```text
 docker compose run --rm --build reports show --report /data/my-run/report.json
