@@ -15,7 +15,10 @@ During both tests, do not move the mouse, press keys, switch/minimize windows
 or cover the benchmark. The runner brings it back to the foreground.
 To cancel, focus the runner console and press Ctrl+C; wait for cleanup.
 After interference, repeat the measurement without interacting with the computer.
-A successful run opens results/<run>/report.html and restores the original INI.
+A successful run restores the original INI, prints CPU/GPU FPS and report paths,
+and attempts to open results/<run>/report.html using the Windows default app.
+Chrome is not required. If no HTML app is available, the completed result remains
+saved; read report.json in a text editor or open the HTML later in a browser.
 
 Windows English OCR is required. Russian menus additionally require Russian OCR.
 Tesseract and its model are bundled; native libraries need Microsoft Visual C++

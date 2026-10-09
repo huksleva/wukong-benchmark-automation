@@ -207,12 +207,7 @@ internal static class Program
             ReportWriter.Write(output, new(status, started, machine, reports, error));
         }
         Log($"{status}. {Path.Combine(output, "report.html")}");
-        if (status == "completed")
-        {
-            try { using var browser = Process.Start(new ProcessStartInfo(Path.Combine(output, "report.html")) { UseShellExecute = true }); }
-            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-            { Log("Open report.html manually: " + ex.Message); }
-        }
+        if (status == "completed") ReportPresentation.Show(output, reports, Log);
         if (status == "cancelled") return 130;
         return status == "completed" ? 0 : 1;
     }

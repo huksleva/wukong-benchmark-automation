@@ -248,5 +248,23 @@ Test("duplicate agreeing sources cannot hide a nearby conflicting value", () =>
         Line("Minimum FPS 21", 600, 400), Line("Maximum FPS 32", 1000, 400)]);
     Throws<InvalidDataException>(() => ResultParser.Parse(page));
 });
+Test("missing HTML handler preserves console access to completed metrics", () =>
+{
+    var now = DateTimeOffset.UtcNow;
+    PassReport Pass(string name, BenchmarkMetrics metrics) => new(name, now, now, "fixture", metrics,
+        [], "result.png", "result-ocr.json", []);
+    var output = new List<string>();
+    var directory = Path.Combine(Path.GetTempPath(), "wukong browser fallback fixture");
+    var opened = ReportPresentation.Show(directory,
+        [Pass("CPU", new(27, 22, 32)), Pass("GPU", new(2, 2, 2))], output.Add,
+        path => { Equal(Path.Combine(directory, "report.html"), path); throw new System.ComponentModel.Win32Exception(1155); });
+    Equal(false, opened);
+    Equal(true, output.Any(line => line.Contains("CPU:") && line.Contains("27 FPS") && line.Contains("min 22") && line.Contains("max 32")));
+    Equal(true, output.Any(line => line.Contains("GPU:") && line.Contains("2 FPS")));
+    Equal(true, output.Any(line => line == "HTML: " + Path.Combine(directory, "report.html")));
+    Equal(true, output.Any(line => line == "JSON: " + Path.Combine(directory, "report.json")));
+    Equal(true, output.Any(line => line.Contains("Results saved")));
+});
+
 Console.WriteLine($"{count - failures}/{count} tests passed.");
 return failures == 0 ? 0 : 1;
