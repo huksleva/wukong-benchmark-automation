@@ -64,23 +64,37 @@
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
     Get-Command curl.exe -ErrorAction Stop | Out-Null
-    $releaseBase = 'https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download'
-    $taskFolder = Join-Path (Join-Path $env:USERPROFILE 'Downloads') ('wukong-' + [guid]::NewGuid().ToString('N'))
+    $repo = 'https://github.com/huksleva/wukong-benchmark-automation'
+    $releaseBase = "$repo/releases/latest/download"
+    $downloads = Join-Path $env:USERPROFILE 'Downloads'
+    $folderName = 'wukong-' + [guid]::NewGuid().ToString('N')
+    $taskFolder = Join-Path $downloads $folderName
     New-Item -ItemType Directory -Path $taskFolder -Force | Out-Null
-    $taskExe = Join-Path $taskFolder 'Wukong.Automation-win-x64.exe'
-    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 300 -o $taskExe "$releaseBase/Wukong.Automation-win-x64.exe"
-    if ($LASTEXITCODE -ne 0) { throw 'EXE download failed. Check your internet connection.' }
-    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 60 -o (Join-Path $taskFolder 'SHA256SUMS.txt') "$releaseBase/SHA256SUMS.txt"
+    $asset = 'Wukong.Automation-win-x64.exe'
+    $taskExe = Join-Path $taskFolder $asset
+    $checksumFile = Join-Path $taskFolder 'SHA256SUMS.txt'
+    $curlArgs = @('-fL', '--retry', '2', '--connect-timeout', '20')
+    curl.exe @curlArgs --max-time 300 -o $taskExe "$releaseBase/$asset"
+    if ($LASTEXITCODE -ne 0) {
+        throw 'EXE download failed. Check your internet connection.'
+    }
+    $checksumUrl = "$releaseBase/SHA256SUMS.txt"
+    curl.exe @curlArgs --max-time 60 -o $checksumFile $checksumUrl
     if ($LASTEXITCODE -ne 0) { throw 'Checksum download failed.' }
-    $checksums = Get-Content (Join-Path $taskFolder 'SHA256SUMS.txt') -Raw
-    if ($checksums -notmatch '(?im)^([a-f0-9]{64})\s+\*?Wukong\.Automation-win-x64\.exe\r?$') { throw 'EXE checksum is missing.' }
+    $checksums = Get-Content -LiteralPath $checksumFile -Raw
+    $pattern = '(?im)^([a-f0-9]{64})\s+\*?' +
+        [regex]::Escape($asset) + '\r?$'
+    if ($checksums -notmatch $pattern) { throw 'EXE checksum is missing.' }
     $expectedHash = $Matches[1]
-    if ((Get-FileHash -LiteralPath $taskExe -Algorithm SHA256).Hash -ne $expectedHash) { throw 'EXE checksum mismatch.' }
+    $actualHash = (Get-FileHash $taskExe -Algorithm SHA256).Hash
+    if ($actualHash -ne $expectedHash) { throw 'EXE checksum mismatch.' }
     Write-Host "Application and results folder: $taskFolder"
     Push-Location $taskFolder
     try {
         & $taskExe start
-        if ($LASTEXITCODE -ne 0) { throw 'Application stopped. Read its diagnostic message above.' }
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Application stopped. Read its diagnostic message above.'
+        }
     } finally { Pop-Location }
 }
 ```
@@ -109,9 +123,12 @@
   task_dir=$(mktemp -d "$HOME/Downloads/wukong-reports.XXXXXX")
   cd "$task_dir"
   asset="Wukong.Reports-$rid.tar.gz"
-  release_base=https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download
-  curl -fL --retry 2 --connect-timeout 20 --max-time 300 -o "$asset" "$release_base/$asset"
-  curl -fL --retry 2 --connect-timeout 20 --max-time 60 -o "$asset.sha256" "$release_base/$asset.sha256"
+  repo=https://github.com/huksleva/wukong-benchmark-automation
+  release_base="$repo/releases/latest/download"
+  curl -fL --retry 2 --connect-timeout 20 --max-time 300 \
+    -o "$asset" "$release_base/$asset"
+  curl -fL --retry 2 --connect-timeout 20 --max-time 60 \
+    -o "$asset.sha256" "$release_base/$asset.sha256"
   case "$rid" in
     linux-*) sha256sum -c "$asset.sha256" ;;
     osx-*) shasum -a 256 -c "$asset.sha256" ;;
@@ -138,22 +155,37 @@ Reports покажет оборудование и FPS из включённог
     Get-Command curl.exe -ErrorAction Stop | Out-Null
     Get-Command docker -ErrorAction Stop | Out-Null
     $dockerOs = docker info --format '{{.OSType}}'
-    if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop and wait until it is ready.' }
-    if ($dockerOs -ne 'linux') { throw 'Select Linux containers in Docker Desktop.' }
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Start Docker Desktop and wait until it is ready.'
+    }
+    if ($dockerOs -ne 'linux') {
+        throw 'Select Linux containers in Docker Desktop.'
+    }
     docker compose version
-    if ($LASTEXITCODE -ne 0) { throw 'Install Docker Compose or update Docker Desktop.' }
-    $taskFolder = Join-Path (Join-Path $env:USERPROFILE 'Downloads') ('wukong-docker-' + [guid]::NewGuid().ToString('N'))
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Install Docker Compose or update Docker Desktop.'
+    }
+    $downloads = Join-Path $env:USERPROFILE 'Downloads'
+    $folderName = 'wukong-docker-' + [guid]::NewGuid().ToString('N')
+    $taskFolder = Join-Path $downloads $folderName
     New-Item -ItemType Directory -Path $taskFolder -Force | Out-Null
     $sourceZip = Join-Path $taskFolder 'source.zip'
-    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 300 -o $sourceZip 'https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip'
-    if ($LASTEXITCODE -ne 0) { throw 'Source download failed. Check your internet connection.' }
+    $repo = 'https://github.com/huksleva/wukong-benchmark-automation'
+    $sourceUrl = "$repo/archive/refs/heads/main.zip"
+    $curlArgs = @('-fL', '--retry', '2', '--connect-timeout', '20')
+    curl.exe @curlArgs --max-time 300 -o $sourceZip $sourceUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Source download failed. Check your internet connection.'
+    }
     Expand-Archive -LiteralPath $sourceZip -DestinationPath $taskFolder
     $projectFolder = Join-Path $taskFolder 'wukong-benchmark-automation-main'
     Write-Host "Project folder: $projectFolder"
     Push-Location $projectFolder
     try {
         docker compose run --rm --build reports
-        if ($LASTEXITCODE -ne 0) { throw 'Docker stopped. Read its diagnostic message above.' }
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Docker stopped. Read its diagnostic message above.'
+        }
     } finally { Pop-Location }
 }
 ```
@@ -164,12 +196,18 @@ Reports покажет оборудование и FPS из включённог
 (
   set -eu
   docker_os=$(docker info --format '{{.OSType}}')
-  [ "$docker_os" = linux ] || { echo 'Use a Linux-container Docker engine.'; exit 1; }
+  if [ "$docker_os" != linux ]; then
+    echo 'Use a Linux-container Docker engine.'
+    exit 1
+  fi
   docker compose version
   mkdir -p "$HOME/Downloads"
   task_dir=$(mktemp -d "$HOME/Downloads/wukong-docker.XXXXXX")
   cd "$task_dir"
-  curl -fL --retry 2 --connect-timeout 20 --max-time 300 -o source.zip https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip
+  repo=https://github.com/huksleva/wukong-benchmark-automation
+  source_url="$repo/archive/refs/heads/main.zip"
+  curl -fL --retry 2 --connect-timeout 20 --max-time 300 \
+    -o source.zip "$source_url"
   unzip -q source.zip
   cd wukong-benchmark-automation-main
   printf 'Project folder: %s\n' "$PWD"
