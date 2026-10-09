@@ -78,7 +78,7 @@ HTML на GitHub доступен как исходный файл. Чтобы �
 
 ### Скачать и запустить
 
-**[⬇ Скачать EXE для Windows x64](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe)** · [Все файлы релиза и SHA-256](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)
+**[Скачать EXE для Windows x64](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe)** · [Все файлы релиза и SHA-256](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)
 
 1. Скачайте **`Wukong.Automation-win-x64.exe`** в папку, доступную для записи, и запустите двойным щелчком.
 2. Следуйте проверкам мастера `start`. Если Steam или бесплатный Benchmark Tool отсутствует, мастер предложит открыть установку. Вход в Steam и первоначальные соглашения требуют вашего решения.
