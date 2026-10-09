@@ -1,4 +1,4 @@
-Wukong Benchmark Automation 0.1.0 — Windows 10/11 x64
+Wukong Benchmark Automation 0.1.1 — Windows 10/11 x64
 
 Download Wukong.Automation-win-x64.exe from GitHub Releases into a writable folder
 and double-click it. This is ONE self-contained EXE: no ZIP extraction, .NET SDK,
@@ -10,7 +10,11 @@ The setup wizard checks Steam, the FREE Black Myth: Wukong Benchmark Tool
 If Steam or the benchmark is missing, follow the installation prompt and retry.
 Sign in to Steam and review first-launch agreements yourself. Complete the initial
 shader compilation and first-launch dialogs once, then close the benchmark.
-During automated tests, keep the game visible and do not use mouse/keyboard.
+Before starting, the runner shows a warning and waits 5 seconds. Input is not locked.
+During both tests, do not move the mouse, press keys, switch/minimize windows
+or cover the benchmark. The runner brings it back to the foreground.
+To cancel, focus the runner console and press Ctrl+C; wait for cleanup.
+After interference, repeat the measurement without interacting with the computer.
 A successful run opens results/<run>/report.html and restores the original INI.
 
 Windows English OCR is required. Russian menus additionally require Russian OCR.

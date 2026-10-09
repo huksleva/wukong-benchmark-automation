@@ -133,6 +133,14 @@ internal static class Program
             throw new InvalidOperationException("CPU/GPU/RAM probe failed; run doctor first. " + string.Join("; ", machine.Warnings));
         var screen = Screen.PrimaryScreen?.Bounds ?? throw new InvalidOperationException("No interactive desktop.");
         var profiles = new[] { BenchmarkProfile.Cpu(options), BenchmarkProfile.Gpu(options, screen.Width, screen.Height) };
+        Console.WriteLine();
+        Console.WriteLine("ВНИМАНИЕ / ATTENTION: автоматизация использует общие мышь и клавиатуру.");
+        Console.WriteLine("До конца обоих тестов не двигайте мышь, не нажимайте клавиши, не переключайте и не перекрывайте окна.");
+        Console.WriteLine("Do not move the mouse, press keys, switch/minimize windows or cover the benchmark until both tests finish.");
+        Console.WriteLine("Программа возвращает фокус бенчмарку; вмешательство может нарушить клики, OCR и достоверность FPS.");
+        Console.WriteLine("Input is not locked. To cancel, focus this console and press Ctrl+C; the runner attempts to restore settings.");
+        Console.WriteLine("Запуск через 5 секунд / Starting in 5 seconds. Ctrl+C cancels now.");
+        await Task.Delay(TimeSpan.FromSeconds(5), token);
         var configDir = options.ConfigDirectory ?? Path.Combine(installation.GameDirectory, "b1", "Saved", "Config", "Windows");
         var output = Path.Combine(Path.GetFullPath(options.OutputDirectory), DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6]);
         Directory.CreateDirectory(output);
