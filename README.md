@@ -43,6 +43,144 @@
 - Единый HTML/JSON-отчёт с CPU, GPU, RAM и подтверждёнными настройками.
 - Резервное копирование INI, восстановление после штатного завершения и частичный отчёт при ошибке.
 
+## Быстрый старт
+
+**Выберите один вариант ниже и скопируйте его блок целиком кнопкой Copy в правом верхнем углу.** Вставьте в указанный терминал и нажмите Enter. Каждый блок включает скачивание и запуск; новая папка в `Downloads` создаётся автоматически. Повторный запуск не перезаписывает предыдущую папку.
+
+| Задача | Вариант | Что нужно заранее |
+|---|---|---|
+| Выполнить два новых игровых теста | [Windows](#windows) | Windows 10/11 x64; PowerShell и `curl.exe` |
+| Посмотреть результаты без Docker | [Linux и macOS](#linux-и-macos) | bash/zsh, `curl`, `tar`; Linux с glibc или macOS |
+| Посмотреть результаты через Docker | [Docker](#docker) | Установленный и запущенный [Docker с Compose](https://docs.docker.com/get-started/get-docker/) |
+
+Для скачивания нужен интернет. **Новые CPU/GPU-замеры выполняет только Windows-приложение.** Linux/macOS и Docker читают сохранённые данные; включённый пример — настоящий Windows-замер от 8 октября 2026 года.
+
+### Windows
+
+Откройте **PowerShell** — например, вкладку PowerShell в Windows Terminal — и вставьте весь блок:
+
+```powershell
+& {
+    $ErrorActionPreference = 'Stop'
+    $ProgressPreference = 'SilentlyContinue'
+    Get-Command curl.exe -ErrorAction Stop | Out-Null
+    $releaseBase = 'https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download'
+    $taskFolder = Join-Path (Join-Path $env:USERPROFILE 'Downloads') ('wukong-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $taskFolder -Force | Out-Null
+    $taskExe = Join-Path $taskFolder 'Wukong.Automation-win-x64.exe'
+    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 300 -o $taskExe "$releaseBase/Wukong.Automation-win-x64.exe"
+    if ($LASTEXITCODE -ne 0) { throw 'EXE download failed. Check your internet connection.' }
+    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 60 -o (Join-Path $taskFolder 'SHA256SUMS.txt') "$releaseBase/SHA256SUMS.txt"
+    if ($LASTEXITCODE -ne 0) { throw 'Checksum download failed.' }
+    $checksums = Get-Content (Join-Path $taskFolder 'SHA256SUMS.txt') -Raw
+    if ($checksums -notmatch '(?im)^([a-f0-9]{64})\s+\*?Wukong\.Automation-win-x64\.exe\r?$') { throw 'EXE checksum is missing.' }
+    $expectedHash = $Matches[1]
+    if ((Get-FileHash -LiteralPath $taskExe -Algorithm SHA256).Hash -ne $expectedHash) { throw 'EXE checksum mismatch.' }
+    Write-Host "Application and results folder: $taskFolder"
+    Push-Location $taskFolder
+    try {
+        & $taskExe start
+        if ($LASTEXITCODE -ne 0) { throw 'Application stopped. Read its diagnostic message above.' }
+    } finally { Pop-Location }
+}
+```
+
+Откроется мастер подготовки. Если Steam или бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/) отсутствует, мастер предложит установку. Вход в Steam, первоначальные соглашения и установка языка Windows OCR могут потребовать ваших действий. Полная игра, .NET SDK, Git и Visual Studio не нужны: зависимости включены в EXE.
+
+После подготовки программа сама применяет настройки, проходит начальную подсказку и выполняет оба теста. **Во время проходов не используйте мышь и клавиатуру, не переключайте и не перекрывайте окна.** Для отмены переключитесь в консоль утилиты, нажмите `Ctrl+C` и дождитесь восстановления настроек. После успешного завершения откроется HTML-отчёт; файлы останутся в созданной папке, исходные INI будут восстановлены.
+
+Можно также [скачать EXE](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe) и открыть двойным щелчком. [Подготовка и диагностика →](docs/USAGE.md)
+
+### Linux и macOS
+
+Откройте **Terminal** с bash/zsh и вставьте весь блок. Он выбирает ОС и архитектуру, проверяет SHA-256, распаковывает архив и запускает Reports:
+
+```bash
+(
+  set -eu
+  case "$(uname -s):$(uname -m)" in
+    Linux:x86_64) rid=linux-x64 ;;
+    Linux:aarch64|Linux:arm64) rid=linux-arm64 ;;
+    Darwin:x86_64) rid=osx-x64 ;;
+    Darwin:arm64) rid=osx-arm64 ;;
+    *) echo 'Supported platforms: Linux/macOS, x64/ARM64.'; exit 1 ;;
+  esac
+  mkdir -p "$HOME/Downloads"
+  task_dir=$(mktemp -d "$HOME/Downloads/wukong-reports.XXXXXX")
+  cd "$task_dir"
+  asset="Wukong.Reports-$rid.tar.gz"
+  release_base=https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download
+  curl -fL --retry 2 --connect-timeout 20 --max-time 300 -o "$asset" "$release_base/$asset"
+  curl -fL --retry 2 --connect-timeout 20 --max-time 60 -o "$asset.sha256" "$release_base/$asset.sha256"
+  case "$rid" in
+    linux-*) sha256sum -c "$asset.sha256" ;;
+    osx-*) shasum -a 256 -c "$asset.sha256" ;;
+  esac
+  tar -xzf "$asset"
+  cd "Wukong.Reports-$rid"
+  printf 'Application folder: %s\n' "$PWD"
+  ./wukong-reports
+)
+```
+
+Reports покажет оборудование и FPS из включённого отчёта и завершится. Steam, браузер и отдельный .NET Runtime не нужны. Нативные сборки проверены на Ubuntu 22.04 x64, Ubuntu 24.04 ARM64 и macOS 15 Intel/Apple Silicon. Если macOS блокирует неподписанный файл или Linux сообщает об отсутствующей системной библиотеке, используйте [инструкцию по платформам](docs/PLATFORMS.md).
+
+### Docker
+
+Установите и запустите Docker с Compose. На Windows используйте **Linux containers**. Выберите блок для своего терминала; скачивать репозиторий вручную или устанавливать Git не нужно.
+
+**Windows — PowerShell:**
+
+```powershell
+& {
+    $ErrorActionPreference = 'Stop'
+    $ProgressPreference = 'SilentlyContinue'
+    Get-Command curl.exe -ErrorAction Stop | Out-Null
+    Get-Command docker -ErrorAction Stop | Out-Null
+    $dockerOs = docker info --format '{{.OSType}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop and wait until it is ready.' }
+    if ($dockerOs -ne 'linux') { throw 'Select Linux containers in Docker Desktop.' }
+    docker compose version
+    if ($LASTEXITCODE -ne 0) { throw 'Install Docker Compose or update Docker Desktop.' }
+    $taskFolder = Join-Path (Join-Path $env:USERPROFILE 'Downloads') ('wukong-docker-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $taskFolder -Force | Out-Null
+    $sourceZip = Join-Path $taskFolder 'source.zip'
+    curl.exe -fL --retry 2 --connect-timeout 20 --max-time 300 -o $sourceZip 'https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip'
+    if ($LASTEXITCODE -ne 0) { throw 'Source download failed. Check your internet connection.' }
+    Expand-Archive -LiteralPath $sourceZip -DestinationPath $taskFolder
+    $projectFolder = Join-Path $taskFolder 'wukong-benchmark-automation-main'
+    Write-Host "Project folder: $projectFolder"
+    Push-Location $projectFolder
+    try {
+        docker compose run --rm --build reports
+        if ($LASTEXITCODE -ne 0) { throw 'Docker stopped. Read its diagnostic message above.' }
+    } finally { Pop-Location }
+}
+```
+
+**Linux/macOS — Terminal с bash/zsh; нужны `curl` и `unzip`:**
+
+```bash
+(
+  set -eu
+  docker_os=$(docker info --format '{{.OSType}}')
+  [ "$docker_os" = linux ] || { echo 'Use a Linux-container Docker engine.'; exit 1; }
+  docker compose version
+  mkdir -p "$HOME/Downloads"
+  task_dir=$(mktemp -d "$HOME/Downloads/wukong-docker.XXXXXX")
+  cd "$task_dir"
+  curl -fL --retry 2 --connect-timeout 20 --max-time 300 -o source.zip https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip
+  unzip -q source.zip
+  cd wukong-benchmark-automation-main
+  printf 'Project folder: %s\n' "$PWD"
+  docker compose run --rm --build reports
+)
+```
+
+Первая сборка скачивает базовые образы .NET и может занять время; повторные сборки используют кэш. Контейнер покажет сохранённый отчёт и завершится. Свои папки отчётов помещайте в `results/` внутри созданного проекта; путь проекта выводится в терминале. Контейнер работает без сети и читает эту папку только для чтения. [Свой отчёт, требования и диагностика Docker →](docs/DOCKER.md)
+
+Все основные команды запуска находятся в этом разделе. Дополнительные команды для своих файлов и настройки описаны в [руководстве](docs/USAGE.md), [Reports](docs/PLATFORMS.md#команды-reports) и [Docker](docs/DOCKER.md#свой-результат).
+
 ## Демонстрация
 
 **Настоящий автоматический запуск, 8 октября 2026.** Оба прохода выполнены на одном компьютере: AMD Ryzen 5 5560U, встроенная Radeon Graphics, 15,4 GiB доступной RAM. GPU-проход выполнен без RT: это оборудование его не поддерживает. Benchmark Tool показывает предупреждение о низкой VRAM; результаты относятся к этому компьютеру и не гарантируют производительность полной игры.
@@ -72,66 +210,6 @@
 HTML на GitHub доступен как исходный файл. Чтобы открыть опубликованный отчёт с изображениями, скачайте репозиторий и откройте `docs/results/2026-10-08/report.html`. После собственного успешного запуска локальный отчёт открывается автоматически.
 
 Цифры FPS дополнительно считываются локальным Tesseract. Модель включена в сборку; изображения не отправляются в облако. [Зависимости и лицензии →](THIRD_PARTY_NOTICES.md)
-
-## Быстрый старт
-
-Для новых CPU/GPU-замеров нужны Windows 10/11 **x64**, Steam и бесплатный [Benchmark Tool](https://store.steampowered.com/app/3132990/Black_Myth_Wukong_Benchmark_Tool/). Полная игра не требуется. Распознаются английские и русские подписи меню; для русского интерфейса нужен русский OCR Windows, для английского — English OCR.
-
-### Способ 1: обычный запуск без Docker
-
-**[Скачать EXE для Windows x64](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe)** · [Все файлы релиза и SHA-256](https://github.com/huksleva/wukong-benchmark-automation/releases/latest)
-
-1. Скачайте **`Wukong.Automation-win-x64.exe`** в папку, доступную для записи, и запустите двойным щелчком.
-2. Следуйте проверкам мастера `start`. Если Steam или бесплатный Benchmark Tool отсутствует, мастер предложит открыть установку. Вход в Steam и первоначальные соглашения требуют вашего решения.
-3. После подготовки программа сама выбирает настройки, проходит стартовую подсказку и запускает оба теста. Оставьте окно видимым и не используйте мышь/клавиатуру.
-4. После успешного завершения откроется HTML-отчёт; исходные настройки будут восстановлены.
-
-Это **один EXE**: .NET, Tesseract и OCR-модель включены. Распаковывать архив, устанавливать SDK, Git или Visual Studio не нужно. Windows OCR и компоненты Steam проверяются отдельно; первое распаковывание внутренних библиотек в кэш Windows может занять время. Файл пока не имеет цифровой подписи издателя. Если Windows показывает предупреждение, сначала проверьте источник и SHA-256 из релиза.
-
-| Операционная система | Что доступно |
-|---|---|
-| **Windows 10/11 x64** | [Скачать EXE](https://github.com/huksleva/wukong-benchmark-automation/releases/latest/download/Wukong.Automation-win-x64.exe), автоматические CPU/GPU-проходы |
-| Linux x64 / ARM64 | [Скачать Wukong Reports](docs/PLATFORMS.md#linux): чтение отчётов и разбор сохранённых OCR-данных |
-| macOS Intel / Apple Silicon | [Скачать Wukong Reports](docs/PLATFORMS.md#macos): чтение отчётов и разбор сохранённых OCR-данных |
-
-**Два новых игровых прохода запускает только Windows-приложение.** Нативный `wukong-reports` для Linux/macOS работает без Steam и установленного .NET, выводит сохранённые FPS в терминал и содержит настоящий отчёт Windows от 8 октября. Он не измеряет производительность текущего компьютера. [Готовые архивы, команды запуска и ограничения →](docs/PLATFORMS.md)
-
-### Способ 2: Docker — одна команда на всех ОС
-
-Установите и запустите Docker с Compose, [скачайте ZIP проекта](https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip), распакуйте его и откройте терминал в папке с `compose.yaml`. На Windows используйте Linux containers. Затем выполните одинаковую команду в PowerShell, bash или zsh:
-
-```text
-docker compose run --rm --build reports
-```
-
-Docker соберёт **Wukong Reports**, покажет включённый настоящий Windows-отчёт и завершит работу. Для этого не нужны Steam, .NET SDK или браузер. Это чтение сохранённых результатов, а не новый замер текущего компьютера. Для своих отчётов папка `results/` подключается только для чтения. **Новые CPU/GPU-проходы запускайте способом 1 на Windows.**
-
-[Docker: свой отчёт, требования и решение ошибок →](docs/DOCKER.md) · [Linux/macOS без Docker →](docs/PLATFORMS.md)
-
-### Из исходников (Windows)
-
-Установите [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) и Git, затем выполните:
-
-```powershell
-git clone https://github.com/huksleva/wukong-benchmark-automation.git
-cd wukong-benchmark-automation
-dotnet build src/Wukong.Automation/Wukong.Automation.csproj -c Release
-dotnet run --project src/Wukong.Automation -c Release -- start
-```
-
-> **Во время двух проходов не используйте мышь и клавиатуру, не переключайте, не сворачивайте и не перекрывайте окна.** Программа показывает предупреждение и ждёт 5 секунд перед запуском. Ввод не блокируется: утилита возвращает фокус бенчмарку, а вмешательство может нарушить клики/OCR и повлиять на FPS. Чтобы отменить тест, переключитесь в консоль утилиты и нажмите `Ctrl+C`; дождитесь сообщения о восстановлении настроек. После вмешательства лучше выполнить новый запуск без работы в других программах.
-
-Перед `run` закройте Benchmark Tool и диалоги Steam. Во время проходов оставьте окно видимым и не используйте мышь/клавиатуру. При первом ручном запуске дождитесь компиляции шейдеров и пройдите первоначальные диалоги. `Ctrl+C` отменяет сценарий с попыткой восстановления INI.
-
-| Команда | Назначение |
-|---|---|
-| `start` / запуск EXE без аргументов | Проверить готовность, помочь с установкой и выполнить оба профиля |
-| `doctor` | Проверить установку, английский OCR и CPU/GPU/RAM |
-| `run` | Выполнить оба профиля и записать отчёт |
-| `parse --image result.png` | Разобрать сохранённое изображение результата |
-| `parse --ocr result-ocr.json` | Разобрать ранее сохранённые OCR-данные |
-
-Нестандартные пути, таймауты и подписи меню задаются через [runner.example.json](runner.example.json). [Полная инструкция и устранение ошибок →](docs/USAGE.md)
 
 ## Профили
 
@@ -178,33 +256,9 @@ Chrome не требуется: HTML открывается приложение
 
 ## Разработка
 
-Этот раздел нужен тем, кто меняет код или собирает приложение самостоятельно. Для обычного запуска достаточно скачать готовую программу в [Releases](https://github.com/huksleva/wukong-benchmark-automation/releases/latest).
+Для изменения кода, запуска проверок и сборки из исходников используйте [инструкцию разработчика](docs/DEVELOPMENT.md). Для обычного запуска выберите готовый блок в [быстром старте](#быстрый-старт).
 
-Из корня репозитория на Windows с .NET 8 SDK:
-
-```powershell
-dotnet run --project tests/Wukong.Tests -c Release
-powershell -ExecutionPolicy Bypass -File packaging/Publish-Windows.ps1 -VerifyImageOcr
-```
-
-Первая команда `dotnet run --project tests/Wukong.Tests -c Release` собирает и запускает **проверки кода**, а не игровой бенчмарк. `--project` выбирает проект, `-c Release` — конфигурацию сборки. Вторая команда запускает PowerShell-скрипт упаковки EXE; `-VerifyImageOcr` дополнительно проверяет распознавание двух сохранённых PNG. `-ExecutionPolicy Bypass` относится к этому процессу PowerShell и не меняет постоянную политику системы.
-
-Переносимый инструмент можно запустить из исходников на Windows/Linux/macOS с .NET 8 SDK:
-
-```bash
-dotnet run --project src/Wukong.Reports -c Release -- --help
-dotnet run --project src/Wukong.Reports -c Release
-```
-
-Без аргументов он показывает включённый отчёт, не запускает тест. Сборка нативного архива требует также Python 3.12+: например, `python3 packaging/publish-reports.py --rid linux-x64` на Linux x64. Скрипт выполняет проверки на ОС сборки, поэтому выбранная архитектура должна соответствовать компьютеру. [Публикация пакетов →](docs/RELEASING.md)
-
-Проверки общего сценария меню выполняются на всех поддерживаемых ОС:
-
-```bash
-dotnet run --project tests/Wukong.Engine.Tests -c Release
-```
-
-`Wukong.Engine` не использует Windows API: окно и OCR подключаются через интерфейсы адаптеров. Сейчас рабочие игровые адаптеры есть для Windows; Linux-адаптер и игровой контейнерный запуск ещё предстоит реализовать и проверить. Docker для сохранённых отчётов уже доступен. [План Linux/Docker и усиления проекта →](docs/PORTING.md)
+`Wukong.Engine` подключает окно и OCR через интерфейсы адаптеров. Игровые адаптеры сейчас реализованы для Windows; Docker и нативный Reports читают сохранённые данные. [План переноса и развития →](docs/PORTING.md)
 
 ## GitHub Actions
 
@@ -230,6 +284,7 @@ dotnet run --project tests/Wukong.Engine.Tests -c Release
 
 | Документ | Содержание |
 |---|---|
+| [Разработка](docs/DEVELOPMENT.md) | Исходники, проверки и сборка |
 | [Архитектура](docs/ARCHITECTURE.md) | Компоненты, сценарий и генерация HTML |
 | [Docker](docs/DOCKER.md) | Одна команда для отчётов на Windows/Linux/macOS |
 | [План развития](docs/PORTING.md) | Полный Linux-порт, Docker и критерии готовности |
