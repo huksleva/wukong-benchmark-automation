@@ -6,15 +6,19 @@ Docker запускает **Wukong Reports**: чтение сохранённы�
 
 **Два новых игровых замера выполняет Windows EXE.** Контейнер показывает результаты уже проведённого теста; FPS из примера относятся к Windows-компьютеру от 8 октября 2026 года. Docker не измеряет производительность вашего компьютера, не запускает Benchmark Tool, не распознаёт PNG и не создаёт новый HTML-отчёт. Существующий HTML можно открыть на хосте.
 
-## Одна команда
+## Быстрый запуск
 
-1. Установите и запустите [Docker Desktop](https://docs.docker.com/get-started/get-docker/) на Windows/macOS или Docker Engine с [Compose plugin](https://docs.docker.com/compose/install/linux/) на Linux. На Windows нужен режим Linux containers. На Linux команда `docker info` должна работать из текущего пользователя.
-2. [Скачайте исходники ZIP](https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip), распакуйте и откройте терминал в папке с `compose.yaml`. Git не обязателен. Альтернатива: `git clone https://github.com/huksleva/wukong-benchmark-automation.git`, затем `cd wukong-benchmark-automation`.
-3. Выполните в PowerShell, bash или zsh:
+Установите [Git](https://git-scm.com/downloads) и запустите [Docker Desktop](https://docs.docker.com/get-started/get-docker/) на Windows/macOS или Docker Engine с [Compose plugin](https://docs.docker.com/compose/install/linux/) на Linux. На Windows нужен режим Linux containers. На Linux команда `docker info` должна работать из текущего пользователя.
+
+В PowerShell, bash или zsh выполните весь блок:
 
 ```text
-docker compose run --rm --build reports
+git clone https://github.com/huksleva/wukong-benchmark-automation.git
+cd wukong-benchmark-automation
+docker compose up --build --exit-code-from reports
 ```
+
+`--build` собирает образ перед запуском, `--exit-code-from reports` завершает Compose после приложения и возвращает его код завершения. Если проект уже скачан, откройте терминал в его папке и выполните только последнюю команду. Вместо Git можно [скачать ZIP](https://github.com/huksleva/wukong-benchmark-automation/archive/refs/heads/main.zip), распаковать и выполнить последнюю команду из папки с `compose.yaml`.
 
 Первая сборка скачивает закреплённые базовые образы .NET и собирает приложение. Для сборки нужен интернет; на компьютере не требуется SDK. Повторные сборки используют кэш Docker. Архитектуру выбирает Docker автоматически, принудительный `--platform` не нужен.
 
@@ -56,7 +60,7 @@ docker compose run --rm reports parse --ocr /data/my-run/cpu/result-ocr.json
 | Invalid report / Invalid OCR | Используйте JSON, созданный приложением; повреждённые данные отклоняются, значения FPS не подставляются |
 | Steam или Benchmark Tool отсутствует | Чтение отчётов продолжит работать; для новых Windows-замеров используйте [мастер EXE](USAGE.md) |
 
-При успешном чтении код завершения — `0`, при неправильном вводе CLI — `1` с `ERROR:` в stderr. Ошибки подготовки Docker выдаёт сам Docker. Для остановки команды — `Ctrl+C`; `--rm` удаляет завершённый контейнер, образ и файлы хоста сохраняются.
+При успешном чтении код завершения — `0`, при неправильном вводе CLI — `1` с `ERROR:` в stderr. Ошибки подготовки Docker выдаёт сам Docker. Для остановки команды — `Ctrl+C`. После `up` завершённый контейнер сохраняется для повторного запуска; `docker compose down` удаляет его и служебные ресурсы Compose, сохраняя образ и файлы хоста. В дополнительных командах `run --rm` удаляет одноразовый контейнер после выполнения.
 
 ## Устройство и проверка
 

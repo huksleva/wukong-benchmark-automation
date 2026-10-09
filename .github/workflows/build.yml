@@ -85,6 +85,6 @@ jobs:
       - name: Validate Compose and build report container
         run: |
           docker compose config --quiet
-          docker compose run --rm --build -T reports
+          docker compose up --build --exit-code-from reports
       - name: Verify CLI, real report fixtures and container isolation
         run: python3 tests/docker/check_container.py
