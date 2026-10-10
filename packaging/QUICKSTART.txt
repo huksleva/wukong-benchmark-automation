@@ -1,4 +1,4 @@
-Wukong Benchmark Automation 0.2.0 — Windows 10/11 x64
+Wukong Benchmark Automation 0.2.1 — Windows 10/11 x64
 
 Download Wukong.Automation-win-x64.exe from GitHub Releases into a writable folder
 and double-click it. This is ONE self-contained EXE: no ZIP extraction, .NET SDK,

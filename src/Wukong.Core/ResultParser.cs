@@ -20,7 +20,10 @@ public static class ResultParser
             ?? throw new InvalidDataException($"Cannot read {item.Name} FPS from the benchmark summary.")).ToArray();
         if (values.Any(v => v < 0 || v > 10000) || values[0] == 0 || values[2] == 0 || values[1] > values[0] || values[0] > values[2])
             throw new InvalidDataException("FPS values are inconsistent (expected minimum <= average <= maximum).");
-        return new(values[0], values[1], values[2], ReadMetric(page, ["95%", "95 %", "5-й перцентиль", "5th percentile"], exclude95: true));
+        var percentile = ReadMetric(page, ["95%", "95 %", "5-й перцентиль", "5th percentile"], exclude95: true);
+        if (percentile is double fps && (fps < values[1] || fps > values[2]))
+            throw new InvalidDataException("95% FPS above must be between minimum and maximum FPS.");
+        return new(values[0], values[1], values[2], percentile);
     }
 
     public static bool TryParse(OcrPage page, out BenchmarkMetrics? metrics)

@@ -12,7 +12,7 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 RUNTIME_VERSION = "8.0.31"
 
 
@@ -54,7 +54,7 @@ def main():
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     (out / "build-info.json").write_text(json.dumps({
         "version": VERSION, "commit": commit, "platform": rid,
-        "runtimeIncluded": True, "mode": "saved-reports-only", "nativeCliChecks": 11,
+        "runtimeIncluded": True, "mode": "saved-reports-only", "nativeCliChecks": 12,
     }, indent=2), encoding="utf-8")
     (out / "QUICKSTART.txt").write_text(
         "Wukong Reports " + VERSION + " — saved reports only; no benchmark is launched.\n"

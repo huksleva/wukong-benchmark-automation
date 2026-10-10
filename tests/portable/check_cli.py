@@ -41,6 +41,11 @@ with tempfile.TemporaryDirectory(prefix="wukong reports checks ") as temp:
     path.write_text('{"width":1280,"height":720,"lines":['
                     '{"text":"Average FPS","words":null}]}', encoding="utf-8")
     run("parse", "--ocr", path, ok=False)
+    ocr = json.loads((actual / "cpu/result-ocr.json").read_text(encoding="utf-8"))
+    ocr["lines"] = [line for line in ocr["lines"] if "перцентиль" not in line["text"]]
+    ocr["lines"].append({"text": "95% FPS above 999", "words": []})
+    path.write_text(json.dumps(ocr), encoding="utf-8")
+    run("parse", "--ocr", path, ok=False)
 run("run", ok=False)
 run("--unknown", ok=False)
-print("11 portable CLI checks passed on " + doctor["os"] + " / " + doctor["architecture"])
+print("12 portable CLI checks passed on " + doctor["os"] + " / " + doctor["architecture"])

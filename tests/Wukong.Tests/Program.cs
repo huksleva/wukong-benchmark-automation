@@ -81,6 +81,44 @@ Test("original INI restored byte-for-byte including new files", () =>
     finally { Directory.Delete(root, true); }
 });
 Test("invalid runner config rejected", () => Throws<ArgumentException>(() => new RunnerOptions { PollIntervalMilliseconds = 1 }.Validate()));
+Test("null UI label dictionary is rejected with a configuration error", () =>
+{
+    var options = JsonSerializer.Deserialize<RunnerOptions>("{\"labels\":null}", JsonDefaults.Options)!;
+    Throws<ArgumentException>(options.Validate);
+});
+Test("null UI label entry is rejected with a configuration error", () =>
+{
+    var options = new RunnerOptions(); options.Labels["settings"] = null!;
+    Throws<ArgumentException>(options.Validate);
+});
+Test("missing output directory is rejected before running", () =>
+{
+    foreach (var directory in new string?[] { null, "", "  " })
+        Throws<ArgumentException>(() => new RunnerOptions { OutputDirectory = directory! }.Validate());
+});
+Test("nonfinite value column is rejected before desktop input", () =>
+{
+    foreach (var value in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+        Throws<ArgumentException>(() => new RunnerOptions { ValueColumnX = value }.Validate());
+});
+Test("out-of-range percentile is rejected instead of reported as FPS", () =>
+{
+    foreach (var value in new[] { "1", "999" })
+    {
+        var page = Inline() with { Lines = [.. Inline().Lines, Line("95% FPS above " + value, 200, 600)] };
+        Throws<InvalidDataException>(() => ResultParser.Parse(page));
+        Equal(false, ResultParser.TryParse(page, out _));
+    }
+});
+Test("percentile bounds and missing optional percentile remain valid", () =>
+{
+    foreach (var value in new[] { "44", "98" })
+    {
+        var page = Inline() with { Lines = [.. Inline().Lines, Line("95% FPS above " + value, 200, 600)] };
+        Equal(double.Parse(value), ResultParser.Parse(page).Fps95PercentAbove);
+    }
+    Equal(null, ResultParser.Parse(Inline()).Fps95PercentAbove);
+});
 Test("report escapes application strings", () =>
 {
     var root = Path.Combine(Path.GetTempPath(), "wukong-report-" + Guid.NewGuid().ToString("N"));
@@ -212,8 +250,8 @@ Test("missing average never borrows the neighboring maximum", () =>
 });
 Test("percentile label number is not the percentile value", () =>
 {
-    var page = Inline() with { Lines = [.. Inline().Lines, Line("5-й перцентиль", 200, 600), Line("24 FPS", 220, 650, 60)] };
-    Equal(24d, ResultParser.Parse(page).Fps95PercentAbove);
+    var page = Inline() with { Lines = [.. Inline().Lines, Line("5-й перцентиль", 200, 600), Line("64 FPS", 220, 650, 60)] };
+    Equal(64d, ResultParser.Parse(page).Fps95PercentAbove);
 });
 Test("local numeric OCR reads actual stylized average FPS", () =>
 {

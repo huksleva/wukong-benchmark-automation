@@ -45,12 +45,14 @@ public sealed class RunnerOptions
         if (StartupTimeoutSeconds < 10 || BenchmarkTimeoutSeconds < 30 || PollIntervalMilliseconds < 500)
             throw new ArgumentException("Timeouts must be >=10s / >=30s and polling >=500ms.");
         if (MaxDiagnosticFrames is < 5 or > 500) throw new ArgumentException("maxDiagnosticFrames must be between 5 and 500.");
-        if (ValueColumnX < .3 || ValueColumnX > .95 || CpuWidth < 640 || CpuHeight < 360
+        if (!double.IsFinite(ValueColumnX) || ValueColumnX < .3 || ValueColumnX > .95 || CpuWidth < 640 || CpuHeight < 360
             || (GpuWidth.HasValue != GpuHeight.HasValue) || GpuWidth is < 640 || GpuHeight is < 360)
             throw new ArgumentException("Invalid resolution or value-column position.");
+        if (string.IsNullOrWhiteSpace(OutputDirectory)) throw new ArgumentException("outputDirectory must not be empty.");
+        if (Labels is null) throw new ArgumentException("UI labels must not be null.");
         var defaults = new RunnerOptions();
         foreach (var key in defaults.Labels.Keys)
-            if (!Labels.TryGetValue(key, out var labels) || labels.Length == 0 || labels.Any(string.IsNullOrWhiteSpace))
+            if (!Labels.TryGetValue(key, out var labels) || labels is null || labels.Length == 0 || labels.Any(string.IsNullOrWhiteSpace))
                 throw new ArgumentException($"Missing UI labels: {key}");
     }
 
